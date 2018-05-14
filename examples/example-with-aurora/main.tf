@@ -16,7 +16,7 @@ module "snapshot_maintenance" {
   source="../../modules/rds_snapshot_maintenance"
 
   final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
-  is_cluster=false
+  is_cluster=true
   identifier="${aws_rds_cluster.aurora.cluster_identifier}"
   database_endpoint="${aws_rds_cluster.aurora.endpoint}"
   number_of_snapshots_to_retain = 0

@@ -5,6 +5,8 @@ AWS RDS Final Snapshot Management Module
 > The first time this configuration is applied the `first_run` variable passed to the modules must be `true`.
 >
 > All subsequent applies should have `first_run` set to false or ommitted (as false is default).
+>
+> Please read all of the README if using or maintaining this module.
 
 This module, or specifically the two submodules `snapshot_identifiers` and `snapshot_maintenance` will manage 
 Final Snapshots of AWS database instances and clusters to ensure that infrastructure can be backed up, destroyed, 
@@ -19,7 +21,7 @@ snapshot and then restore it when later recreated.
 The use case is for development and testing environments which should not be running 24/7 (eg. to save money, or reduce
 risk).  Perhaps a project is only developed infrequently; or perhaps you only want development to run 9-5 Mon-Fri.
 
-This module restores a database which was previously destroyed.
+This module supports creation of a database; and subsequent restoration of a database which was previously destroyed.
 
 > ###### WARNING
 > Destroying infrastructure is by its nature destructive - when developing an environment,
@@ -40,13 +42,11 @@ This can be handled as follows,
     terraform destroy
     terraform apply
 
-Please read all of the README if using or maintaining this module.
-
 The Root module should be used primarily for testing or evaluation.  It will create a usable RDS
-database instance, but does not have the full flexibility that a database module such as 
-"terraform-aws-modules/aws/rds".
+database instance, but does not have the full flexibility of a more complete database module such as 
+"terraform-aws-modules/aws/rds".  Instead the two submodules should be used.
 
-The Root module calls these modules which can (and should) be used separately to create independent resources:
+The Root module calls these submodules which can (and should) be used to create independent resources:
                 
 * [rds_snapshot_identifiers](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/modules/rds_snapshot_identifiers) - calculates Snapshot identifiers
 * [rds_snapshot_maintenance](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/modules/rds_snapshot_maintenance) - deletes old Snapshots

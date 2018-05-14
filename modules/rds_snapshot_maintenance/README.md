@@ -1,12 +1,6 @@
-AWS RDS Snapshot Identifiers Module
+AWS RDS Snapshot Maintenance Module
 ===================================
-
-> ###### IMPORTANT
-> The first time this configuration is applied the `first_run` variable passed to the modules must be `true`.
->
-> All subsequent applies should have `first_run` set to false or ommitted (as false is default).
-
-Terraform Module users are encouraged to use this submodule directly, in combination with the `rds_snapshot_maintenance`
+Terraform Module users are encouraged to use this submodule directly, in combination with the `rds_snapshot_identifiers`
 module, rather than use the root module.
 
 This module will generate a final_snapshot_identifier: this is the name of the snapshot which will be created when
@@ -40,7 +34,7 @@ module "snapshot_maintenance" {
   is_cluster=false
   identifier="${aws_db_instance.database.identifier}"
   database_endpoint="${aws_db_instance.database.endpoint}"
-  number_of_snapshots_to_retain="ALL"
+  number_of_snapshots_to_retain=3
 }
 ```
 

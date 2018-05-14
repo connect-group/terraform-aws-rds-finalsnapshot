@@ -18,7 +18,10 @@ terraform {
 module "snapshot_identifiers" {
   # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
   # to a specific version of the modules, such as the following example:
-  # source = "git::git@github.com:connect-group/terraform-aws-rds-finalsnapshot.git//modules/snapshot_identifiers?ref=v1.0.0"
+  #   source = "git::git@github.com:connect-group/terraform-aws-rds-finalsnapshot.git//modules/rds_snapshot_identifiers?ref=1.0.0"
+  # Or the public registry,
+  #   source = "connect-group/rds/aws//modules/rds_snapshot_identifiers"
+  #   version="1.0.0"
   source="./modules/rds_snapshot_identifiers"
   first_run="${var.first_run}"
   identifier="${var.instance_identifier}"
@@ -43,7 +46,10 @@ resource "aws_db_instance" "database" {
 module "snapshot_maintenance" {
   # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
   # to a specific version of the modules, such as the following example:
-  # source = "git::git@github.com:connect-group/terraform-aws-rds-finalsnapshot.git//modules/snapshot_maintenance?ref=v1.0.0"
+  # source = "git::git@github.com:connect-group/terraform-aws-rds-finalsnapshot.git//modules/rds_snapshot_maintenance?ref=v1.0.0"
+  # Or the public registry,
+  #   source = "connect-group/rds/aws//modules/rds_snapshot_maintenance"
+  #   version="1.0.0"
 
   source="./modules/rds_snapshot_maintenance"
   final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"

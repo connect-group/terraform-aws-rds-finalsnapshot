@@ -23,8 +23,7 @@ data "aws_ssm_parameter" "snapshot_to_restore" {
 
 locals {
   # Defined as a local because we use it twice in the snapshot_constants block below.
-  #TODO allow a supplied snapshot on first use only
-  snapshot_to_restore = "${element(concat(data.aws_ssm_parameter.snapshot_to_restore.*.value, list("")), 0)}"
+  snapshot_to_restore = "${element(concat(data.aws_ssm_parameter.snapshot_to_restore.*.value, list(var.first_run_snapshot_identifier)), 0)}"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

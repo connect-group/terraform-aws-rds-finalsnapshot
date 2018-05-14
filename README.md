@@ -1,7 +1,17 @@
 AWS RDS Final Snapshot Management Module
 ========================================
+
+> ###### IMPORTANT
+> The first time this configuration is applied the `first_run` variable passed to the modules must be `true`.
+>
+> All subsequent applies should have `first_run` set to false or ommitted (as false is default).
+
 This module, or specifically the two submodules `snapshot_identifiers` and `snapshot_maintenance` will manage 
-Final Snapshots of AWS database instances and clusters.
+Final Snapshots of AWS database instances and clusters to ensure that infrastructure can be backed up, destroyed, 
+and restored.
+
+It will retain the last `number_of_snapshots_to_retain`.  If the number to retain is 'ALL' then no snapshots will be 
+deleted.
 
 The primary purpose of the modules is to allow for destruction of a database, such that it will capture a final 
 snapshot and then restore it when later recreated.  
@@ -48,7 +58,7 @@ The Root module calls these modules which can (and should) be used separately to
 
 Usage With 'Built-In' Simple MySQL Instance
 -------------------------------------------
-
+```hcl
 module "db_with_final_snapshot_management" {
   source = "connect-group/rds/aws"
 
@@ -64,37 +74,119 @@ module "db_with_final_snapshot_management" {
 
   number_of_snapshots_to_retain = 0
 }
-
-## terraform version
-This module requires >=0.10.4 because it uses 'Local Values' bug fixed in 0.10.4
-and the `timeadd` function from version 0.11.2 
-
-## description
-This module will generate database snapshot names for restore/final snapshot
-to ensure that infrastucture can be backed up, destroyed, and restored.
-
-It will retain the last `number_of_snapshots_to_retain`.
-If the number to retain is zero, it will simply delete the snapshot.
-If the number to retain is 'ALL' then no snapshots will be deleted.
-
-## pre-requisites
-The AWS account should have been bootstrapped with connect_tf_core version 1.3.6 or later.
-Specifically it expects a Lambda Function to exist named "maintain_rds_final_snapshots"
-
-### How does it work
-This module will create a Cloudwatch scheduled event which will run just once, within 5 minutes
-of creation.
-
-## variables to supply to the module
-To see what a variable does look in variables.tf for descriptions.
-
-The following variables are MANDATORY:
-* final_snapshot_identifier
+```
 
 
-The following variables can be left blank and use the indicated defaults if
-blank:
-* number_of_snapshots_to_retain (Default = 1)
+Usage With Official Terraform RDS Module
+----------------------------------------
+```hcl
+module "snapshot_identifiers" {
+  source = "connect-group/rds/aws//modules/rds_snapshot_identifiers"
+
+  first_run="${var.first_run}"
+  identifier="demodb"
+}
+
+module "snapshot_maintenance" {
+  source="connect-group/rds/aws//modules/rds_snapshot_maintenance"
+
+  final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
+  is_cluster=false
+  identifier="${module.db.this_db_instance_id}"
+  database_endpoint="${module.db.this_db_instance_endpoint}"
+  number_of_snapshots_to_retain = 1
+}
+
+module "db" {
+  source = "terraform-aws-modules/rds/aws"
+
+  identifier = "${module.snapshot_identifiers.identifier}"
+
+  engine            = "mysql"
+  engine_version    = "5.7.19"
+  instance_class    = "db.t2.large"
+  allocated_storage = 5
+
+  name     = "demodb"
+  username = "user"
+  password = "YourPwdShouldBeLongAndSecure!"
+  port     = "3306"
+
+  vpc_security_group_ids = ["sg-12345678"]
+
+  maintenance_window = "Mon:00:00-Mon:03:00"
+  backup_window      = "03:00-06:00"
+
+  # DB subnet group
+  subnet_ids = ["subnet-12345678", "subnet-87654321"]
+
+  # DB parameter group
+  family = "mysql5.7"
+
+  # Snapshot names managed by module
+  snapshot_identifier = "${module.snapshot_identifiers.snapshot_to_restore}"
+  final_snapshot_identifier = "${module.snapshot_identifiers.final_snapshot_identifier}"
+}
+```
+
+Usage With Aurora Cluster
+-------------------------
+```hcl
+module "snapshot_identifiers" {
+  source = "connect-group/rds/aws//modules/rds_snapshot_identifiers"
+
+  first_run="${var.first_run}"
+  identifier="democluster"
+}
+
+module "snapshot_maintenance" {
+  source="connect-group/rds/aws//modules/rds_snapshot_maintenance"
+
+  final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
+  is_cluster=true
+  identifier="${module.db.this_db_instance_id}"
+  database_endpoint="${module.db.this_db_instance_endpoint}"
+  number_of_snapshots_to_retain = 1
+}
+
+resource "aws_rds_cluster_instance" "cluster_instances" {
+  count              = 2
+  identifier         = "aurora-cluster-demo-${count.index}"
+  cluster_identifier = "${aws_rds_cluster.aurora.id}"
+  instance_class     = "db.r3.large"
+}
+
+resource "aws_rds_cluster" "aurora" {
+  cluster_identifier = "${module.snapshot_identifiers.identifier}"
+  availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  database_name      = "demodb"
+  master_username    = "user"
+  master_password    = "AnInsanelyDifficultToGuessPasswordWhichShouldBeChanged"
+}
+```
+
+Examples
+--------
+
+* [Complete RDS example for MySQL](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-rds-module)
+* [Complete Aurora example](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-aurora)
+
+Terraform Version
+-----------------
+This module requires >=0.10.4 because it uses 'Local Values' bug fixed in 0.10.4 and the `timeadd` function from 
+version 0.11.2.
+
+How does it work? (Under the hood)
+----------------------------------
+This module creates a Lambda function which will run just once, after the database is created.  It is triggered by a 
+Cloudwatch scheduled event which will run just once, within 3 minutes of creation.
+
+This is required because Terraform data sources fail if a data source returns 0 results.  But after a destroy there
+can be no managed Terraform resources; hence, the Lambda maintains an SSM Parameter which is not managed by Terraform.
+
+AWS RDS maintains the final snapshot, which is not managed by Terraform; but on 'first run', and until the database is
+destroyed for the first time, that snapshot will not exist: so again, a data source cannot be used as it would cause
+Terraform to fail. 
 
 Authors
 -------
@@ -103,5 +195,4 @@ Module managed by [Adam Perry](https://github.com/4dz) and [Connect Group](https
 
 License
 -------
-
 Apache 2 Licensed. See LICENSE for full details.

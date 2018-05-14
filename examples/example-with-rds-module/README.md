@@ -21,11 +21,11 @@ To run this example you need to execute:
 $ terraform init
 $ terraform plan -var first_run=true
 $ terraform apply -var first_run=true
-$ terraform destroy
+$ terraform destroy # (warning, wait 3 minutes before destroying)
 $ terraform apply
-$ terraform destroy
+$ terraform destroy # (warning, wait 3 minutes before destroying)
 $ terraform apply
-$ terraform destroy
+$ terraform destroy # (warning, wait 3 minutes before destroying)
 ```
 
 Note that this example may create resources which cost money. Run `terraform destroy` when you don't need these 

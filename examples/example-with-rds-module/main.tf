@@ -20,7 +20,7 @@ module "snapshot_maintenance" {
 
   final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
   is_cluster=false
-  identifier="${module.db.this_db_instance_id}"
+  identifier="${module.snapshot_identifiers.identifier}"
   database_endpoint="${module.db.this_db_instance_endpoint}"
   number_of_snapshots_to_retain = 0
 }
@@ -87,4 +87,6 @@ module "db" {
 
   # Snapshot name upon DB deletion
   final_snapshot_identifier = "${module.snapshot_identifiers.final_snapshot_identifier}"
+
+  skip_final_snapshot = "false"
 }

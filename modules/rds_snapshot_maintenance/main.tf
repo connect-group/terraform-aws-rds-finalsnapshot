@@ -116,29 +116,11 @@ resource "aws_iam_policy_attachment" "attach-policy" {
 # ---------------------------------------------------------------------------------------------------------------------
 locals {
   #2017-11-22T00:10:00Z -> cron(10 00 22 11 ? 2017)
-  time="${split(":", element(split("T", null_resource.time.triggers.when),1))}"
-  date="${split("-", element(split("T", null_resource.time.triggers.when),0))}"
-}
-
-resource "null_resource" "time" {
-  triggers {
-    depends_on_database = "${var.identifier}"
-    when = "${timeadd(timestamp(), "3m")}"
-  }
-
-  lifecycle {
-    ignore_changes = ["triggers"]
-  }
-}
-
-resource "null_resource" "constants" {
-  triggers {
-    schedule_expression="cron(${local.time[1]} ${local.time[0]} ${local.date[2]} ${local.date[1]} ? ${local.date[0]})"
-  }
-
-  lifecycle {
-    ignore_changes = ["triggers"]
-  }
+  #Database endpoint is added to force the timestamp to be generated after the database has been created
+  when = "${timeadd(timestamp(), "2m")}T${var.database_endpoint}"
+  time="${split(":", element(split("T", local.when),1))}"
+  date="${split("-", element(split("T", local.when),0))}"
+  schedule_expression="cron(${local.time[1]} ${local.time[0]} ${local.date[2]} ${local.date[1]} ? ${local.date[0]})"
 }
 
 resource "aws_cloudwatch_event_rule" "maintain-rds-final-snapshot" {
@@ -146,7 +128,11 @@ resource "aws_cloudwatch_event_rule" "maintain-rds-final-snapshot" {
 
   # The database_endpoint is here primarily to ensure the cloudwatch event is created after the database.
   description = "TERRAFORMED: maintain-rds-final-snapshot ${var.database_endpoint}"
-  schedule_expression = "${null_resource.constants.triggers.schedule_expression}"
+  schedule_expression = "${local.schedule_expression}"
+
+  lifecycle {
+    ignore_changes = ["schedule_expression"]
+  }
 }
 
 resource "aws_cloudwatch_event_target" "maintain-rds-final-snapshot" {

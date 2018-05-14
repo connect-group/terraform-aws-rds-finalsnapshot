@@ -34,7 +34,7 @@ This can be handled as follows,
     # First run
     terraform apply -var first_run=true
     
-    # Subsequent runs:
+    # Subsequent runs: (warning, wait 3 minutes before destroying) 
     terraform destroy
     terraform apply
     terraform destroy
@@ -92,7 +92,7 @@ module "snapshot_maintenance" {
 
   final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
   is_cluster=false
-  identifier="${module.db.this_db_instance_id}"
+  identifier="${module.snapshot_identifiers.identifier}"
   database_endpoint="${module.db.this_db_instance_endpoint}"
   number_of_snapshots_to_retain = 1
 }
@@ -126,6 +126,7 @@ module "db" {
   # Snapshot names managed by module
   snapshot_identifier = "${module.snapshot_identifiers.snapshot_to_restore}"
   final_snapshot_identifier = "${module.snapshot_identifiers.final_snapshot_identifier}"
+  skip_final_snapshot = "false"
 }
 ```
 

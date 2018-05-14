@@ -22,7 +22,7 @@ Usage
 -----
 ```hcl
 module "snapshot_identifiers" {
-  source = "connect-group/rds/aws//modules/rds_snapshot_identifiers"
+  source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_identifiers"
 
   first_run="${var.first_run}"
   identifier="instance_identifier"
@@ -34,7 +34,7 @@ resource "aws_db_instance" "database" {
 }
 
 module "snapshot_maintenance" {
-  source="connect-group/rds/aws//modules/rds_snapshot_maintenance"
+  source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
   final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
   is_cluster=false

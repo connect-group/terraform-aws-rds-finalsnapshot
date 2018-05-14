@@ -60,7 +60,7 @@ Usage With 'Built-In' Simple MySQL Instance
 -------------------------------------------
 ```hcl
 module "db_with_final_snapshot_management" {
-  source = "connect-group/rds/aws"
+  source = "connect-group/rds-finalsnapshot/aws"
 
   first_run = "{$var.first_run}"
 
@@ -81,14 +81,14 @@ Usage With Official Terraform RDS Module
 ----------------------------------------
 ```hcl
 module "snapshot_identifiers" {
-  source = "connect-group/rds/aws//modules/rds_snapshot_identifiers"
+  source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_identifiers"
 
   first_run="${var.first_run}"
   identifier="demodb"
 }
 
 module "snapshot_maintenance" {
-  source="connect-group/rds/aws//modules/rds_snapshot_maintenance"
+  source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
   final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
   is_cluster=false
@@ -134,14 +134,14 @@ Usage With Aurora Cluster
 -------------------------
 ```hcl
 module "snapshot_identifiers" {
-  source = "connect-group/rds/aws//modules/rds_snapshot_identifiers"
+  source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_identifiers"
 
   first_run="${var.first_run}"
   identifier="democluster"
 }
 
 module "snapshot_maintenance" {
-  source="connect-group/rds/aws//modules/rds_snapshot_maintenance"
+  source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
   final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
   is_cluster=true

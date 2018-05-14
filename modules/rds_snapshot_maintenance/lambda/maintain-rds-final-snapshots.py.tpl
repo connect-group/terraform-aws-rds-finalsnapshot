@@ -21,8 +21,8 @@ rds = boto3.client('rds')
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Main entry point into the Lambda function.
-# Event and Context are ignored; instead the variables required by the Lambda are compiled in
-# by the terraform file_template resource.
+# Event and Context are ignored; instead the variables required by the Lambda are compiled in by the terraform
+# file_template resource.
 # ---------------------------------------------------------------------------------------------------------------------
 def handler(event,context):
 

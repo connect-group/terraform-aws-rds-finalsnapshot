@@ -5,19 +5,12 @@ provider "aws" {
 ##############################################################
 # terraform-aws-rds-finalsnapshot Modules
 ##############################################################
-module "snapshot_identifiers" {
-  source = "../../modules/rds_snapshot_identifiers"
-
-  first_run="${var.first_run}"
-  identifier="democluster"
-}
-
 module "snapshot_maintenance" {
   source="../../modules/rds_snapshot_maintenance"
 
-  final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
+  first_run="${var.first_run}"
+  identifier="democluster"
   is_cluster=true
-  identifier="${aws_rds_cluster.aurora.cluster_identifier}"
   database_endpoint="${aws_rds_cluster.aurora.endpoint}"
   number_of_snapshots_to_retain = 0
 }
@@ -42,7 +35,7 @@ data "aws_security_group" "default" {
 # Aurora Cluster
 ##############################################################
 resource "aws_rds_cluster" "aurora" {
-  cluster_identifier      = "${module.snapshot_identifiers.identifier}"
+  cluster_identifier      = "${module.snapshot_maintenance.identifier}"
 
   database_name           = "demodb"
   master_username         = "user"
@@ -52,10 +45,10 @@ resource "aws_rds_cluster" "aurora" {
   backup_retention_period = 1
 
   # Snapshot name to restore upon DB creation
-  snapshot_identifier = "${module.snapshot_identifiers.snapshot_to_restore}"
+  snapshot_identifier = "${module.snapshot_maintenance.snapshot_to_restore}"
 
   # Snapshot name upon DB deletion
-  final_snapshot_identifier = "${module.snapshot_identifiers.final_snapshot_identifier}"
+  final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
 
   db_subnet_group_name = "${aws_db_subnet_group.aurora.name}"
   db_cluster_parameter_group_name = "${aws_rds_cluster_parameter_group.aurora.name}"

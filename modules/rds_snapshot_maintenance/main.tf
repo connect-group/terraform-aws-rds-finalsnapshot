@@ -7,10 +7,20 @@
 #
 # The lambda runs just once, within 3 minutes of creation, and is not required to run again.
 # ---------------------------------------------------------------------------------------------------------------------
+
+# This module requires >=0.10.4 because it uses 'Local Values' bug fixed in 0.10.4
+# and the timeadd function from 0.11.2
+terraform {
+  required_version = ">=0.11.2"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Create the Lambda.
+# ---------------------------------------------------------------------------------------------------------------------
 data "template_file" "maintain-rds-final-snapshots" {
   template = "${file("${path.module}/lambda/maintain-rds-final-snapshots.py.tpl")}"
   vars {
-    final_snapshot_identifier     = "${var.final_snapshot_identifier}",
+    final_snapshot_identifier     = "${null_resource.snapshot_constants.triggers.final_snapshot_identifier}",
     number_of_snapshots_to_retain = "${var.number_of_snapshots_to_retain == "ALL" ? -1 : var.number_of_snapshots_to_retain }",
     identifier                    = "${var.identifier}"
     is_cluster                    = "${var.is_cluster? "True" : "False"}"
@@ -145,7 +155,7 @@ resource "aws_cloudwatch_event_target" "maintain-rds-final-snapshot" {
 # Allow Cloudwatch to execute the Lambda.
 # ---------------------------------------------------------------------------------------------------------------------
 resource "aws_lambda_permission" "allow-cloudwatch-to-call-maintain-rds-final-snapshot-lambda" {
-  statement_id = "AllowExecutionFromCloudWatch_maintain-rds-final-snapshot-${var.final_snapshot_identifier}"
+  statement_id = "AllowExecutionFromCloudWatch_maintain-rds-final-snapshot-${null_resource.snapshot_constants.triggers.final_snapshot_identifier}"
   action = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.maintain-rds-final-snapshots.function_name}"
   principal = "events.amazonaws.com"

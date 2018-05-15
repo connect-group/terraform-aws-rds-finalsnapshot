@@ -8,19 +8,18 @@ provider "aws" {
 ##############################################################
 # terraform-aws-rds-finalsnapshot Modules
 ##############################################################
-module "snapshot_identifiers" {
-  source = "../../modules/rds_snapshot_identifiers"
-
-  first_run="${var.first_run}"
-  identifier="demodb"
-}
+//module "snapshot_identifiers" {
+//  source = "../../modules/rds_snapshot_identifiers"
+//
+//  identifier="demodb"
+//}
 
 module "snapshot_maintenance" {
   source="../../modules/rds_snapshot_maintenance"
 
-  final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
+  first_run="${var.first_run}"
   is_cluster=false
-  identifier="${module.snapshot_identifiers.identifier}"
+  identifier="demodb"
   database_endpoint="${module.db.this_db_instance_endpoint}"
   number_of_snapshots_to_retain = 0
 }
@@ -48,7 +47,7 @@ module "db" {
   source = "terraform-aws-modules/rds/aws"
   version = "1.15.0"
 
-  identifier = "${module.snapshot_identifiers.identifier}"
+  identifier = "${module.snapshot_maintenance.identifier}"
 
   # All available versions: http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html#MySQL.Concepts.VersionMgmt
   engine            = "mysql"
@@ -83,10 +82,10 @@ module "db" {
   family = "mysql5.7"
 
   # Snapshot name to restore upon DB creation
-  snapshot_identifier = "${module.snapshot_identifiers.snapshot_to_restore}"
+  snapshot_identifier = "${module.snapshot_maintenance.snapshot_to_restore}"
 
   # Snapshot name upon DB deletion
-  final_snapshot_identifier = "${module.snapshot_identifiers.final_snapshot_identifier}"
+  final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
 
   skip_final_snapshot = "false"
 }

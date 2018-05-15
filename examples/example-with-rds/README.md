@@ -1,6 +1,6 @@
-Final Snapshot used in conjunction with official rds module
-===========================================================
-This folder contains an example of an RDS MySQL Instance deployed in AWS using the official Terraform RDS Module.
+Final Snapshot used in conjunction with RDS
+===========================================
+This folder contains an example of an RDS MySQL Instance deployed in AWS.
 
 1. The infrastructure is first created with `terraform apply -var first_run=true`
 1. When destroyed with `terraform destroy`, a final snapshot will be taken.
@@ -8,8 +8,8 @@ This folder contains an example of an RDS MySQL Instance deployed in AWS using t
 3. When destroyed with `terraform destroy`, a final snapshot will be taken and the previous final snapshot removed.
 4. When recreated with `terraform apply`, the latest final snapshot will be restored.   
 
-Configuration in this directory creates set of RDS resources including DB instance, DB subnet group and DB 
-parameter group.
+Configuration in this directory creates set of RDS resources including a DB cluster, DB instances, DB subnet group 
+and DB parameter group.
 
 Data sources are used to discover existing VPC resources (VPC, subnet and security group).
 
@@ -21,11 +21,11 @@ To run this example you need to execute:
 $ terraform init
 $ terraform plan -var first_run=true
 $ terraform apply -var first_run=true
-$ terraform destroy # (warning, wait 3 minutes before destroying)
+$ terraform destroy
 $ terraform apply
-$ terraform destroy # (warning, wait 3 minutes before destroying)
+$ terraform destroy
 $ terraform apply
-$ terraform destroy # (warning, wait 3 minutes before destroying)
+$ terraform destroy
 ```
 
 Note that this example may create resources which cost money. Run `terraform destroy` when you don't need these 
@@ -51,4 +51,3 @@ $ aws --region=eu-west-1 rds delete-db-snapshot --db-snapshot-identifier "demodb
 $ aws ssm delete-parameter --name "/rds_final_snapshot/demodb/snapshot_to_restore"
 ```
 
- 

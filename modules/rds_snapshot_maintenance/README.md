@@ -1,7 +1,12 @@
 AWS RDS Snapshot Maintenance Module
 ===================================
-Terraform Module users are encouraged to use this submodule directly, in combination with the `rds_snapshot_identifiers`
-module, rather than use the root module.
+
+> ###### IMPORTANT
+> The first time this configuration is applied the `first_run` variable passed to the modules must be `true`.
+>
+> All subsequent applies should have `first_run` set to false or ommitted (as false is default).
+
+Terraform Module users are encouraged to use this submodule directly rather than use the root module.
 
 This module will generate a final_snapshot_identifier: this is the name of the snapshot which will be created when
 the database or cluster is destroyed.
@@ -12,30 +17,32 @@ restore the database from.
 *On the `first_run` only*, the optional variable `first_run_snapshot_identifier` may be used to specify
 a known snapshot from which to create the database.  On subsequent runs, this variable is ignored.
 
+This module will also create an SSM Parameter, which acts as an alias to the last created final_snapshot.
+The SSM Parameter must exist outside of Terraform control, since it should not be destroyed; so a Lambda
+is used to create the SSM Parameter.
+
+This module also removes old final_snapshots upon successful creation of the database or cluster which it
+is maintaining.
+
 Usage
 -----
 ```hcl
-module "snapshot_identifiers" {
-  source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_identifiers"
+module "snapshot_maintenance" {
+  source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
   first_run="${var.first_run}"
-  identifier="instance_identifier"
   first_run_snapshot_identifier="some_known_snapshot"
+  identifier="instance_identifier"
+  is_cluster=false
+  database_endpoint="${aws_db_instance.database.endpoint}"
+  number_of_snapshots_to_retain=3
 }
 
+# Or this can be an aws_rds_cluster
 resource "aws_db_instance" "database" {
   # ...
 }
 
-module "snapshot_maintenance" {
-  source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
-
-  final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
-  is_cluster=false
-  identifier="${aws_db_instance.database.identifier}"
-  database_endpoint="${aws_db_instance.database.endpoint}"
-  number_of_snapshots_to_retain=3
-}
 ```
 
 Terraform Version
@@ -49,7 +56,7 @@ For more information and examples please review the [root module README](https:/
 
 Authors
 -------
-Currently maintained by [these awesome contributors](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/graphs/contributors).
+Currently maintained by [these contributors](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/graphs/contributors).
 Module managed by [Adam Perry](https://github.com/4dz) and [Connect Group](https://github.com/connect-group)
 
 License

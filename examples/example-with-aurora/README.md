@@ -1,6 +1,6 @@
 Final Snapshot used in conjunction with Aurora Cluster
 ======================================================
-This folder contains an example of an RDS MySQL Instance deployed in AWS.
+This folder contains an example of an Aurora cluster deployed in AWS.
 
 1. The infrastructure is first created with `terraform apply -var first_run=true`
 1. When destroyed with `terraform destroy`, a final snapshot will be taken.

@@ -8,7 +8,7 @@ AWS RDS Final Snapshot Management Module
 >
 > Please read all of the README if using or maintaining this module.
 
-This module, or specifically the two submodules `snapshot_identifiers` and `snapshot_maintenance` will manage 
+This module, or specifically the submodule `rds_snapshot_maintenance` will manage 
 Final Snapshots of AWS database instances and clusters to ensure that infrastructure can be backed up, destroyed, 
 and restored.
 
@@ -80,19 +80,13 @@ module "db_with_final_snapshot_management" {
 Usage With Official Terraform RDS Module
 ----------------------------------------
 ```hcl
-module "snapshot_identifiers" {
-  source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_identifiers"
-
-  first_run="${var.first_run}"
-  identifier="demodb"
-}
-
 module "snapshot_maintenance" {
   source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
-  final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
+  first_run="${var.first_run}"
+  identifier="demodb"
+
   is_cluster=false
-  identifier="${module.snapshot_identifiers.identifier}"
   database_endpoint="${module.db.this_db_instance_endpoint}"
   number_of_snapshots_to_retain = 1
 }
@@ -100,7 +94,7 @@ module "snapshot_maintenance" {
 module "db" {
   source = "terraform-aws-modules/rds/aws"
 
-  identifier = "${module.snapshot_identifiers.identifier}"
+  identifier = "${module.snapshot_maintenance.identifier}"
 
   engine            = "mysql"
   engine_version    = "5.7.19"
@@ -124,8 +118,8 @@ module "db" {
   family = "mysql5.7"
 
   # Snapshot names managed by module
-  snapshot_identifier = "${module.snapshot_identifiers.snapshot_to_restore}"
-  final_snapshot_identifier = "${module.snapshot_identifiers.final_snapshot_identifier}"
+  snapshot_identifier = "${module.snapshot_maintenance.snapshot_to_restore}"
+  final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
   skip_final_snapshot = "false"
 }
 ```
@@ -133,19 +127,13 @@ module "db" {
 Usage With Aurora Cluster
 -------------------------
 ```hcl
-module "snapshot_identifiers" {
-  source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_identifiers"
-
-  first_run="${var.first_run}"
-  identifier="democluster"
-}
-
 module "snapshot_maintenance" {
   source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
-  final_snapshot_identifier="${module.snapshot_identifiers.final_snapshot_identifier}"
+  first_run="${var.first_run}"
+  identifier="democluster"
+
   is_cluster=true
-  identifier="${module.db.this_db_instance_id}"
   database_endpoint="${module.db.this_db_instance_endpoint}"
   number_of_snapshots_to_retain = 1
 }
@@ -158,7 +146,7 @@ resource "aws_rds_cluster_instance" "cluster_instances" {
 }
 
 resource "aws_rds_cluster" "aurora" {
-  cluster_identifier = "${module.snapshot_identifiers.identifier}"
+  cluster_identifier = "${module.snapshot_maintenance.identifier}"
   availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
   database_name      = "demodb"
   master_username    = "user"
@@ -169,8 +157,9 @@ resource "aws_rds_cluster" "aurora" {
 Examples
 --------
 
-* [Complete RDS example for MySQL](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-rds-module)
+* [Complete RDS example for MySQL using official Terraform RDS Module](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-rds-module)
 * [Complete Aurora example](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-aurora)
+* [Complete RDS MySQL example](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-rds)
 
 Terraform Version
 -----------------

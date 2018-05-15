@@ -14,38 +14,23 @@ terraform {
   required_version = ">=0.11.2"
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
-# Create the Lambda.
-# ---------------------------------------------------------------------------------------------------------------------
-data "template_file" "maintain-rds-final-snapshots" {
-  template = "${file("${path.module}/lambda/maintain-rds-final-snapshots.py.tpl")}"
-  vars {
-    final_snapshot_identifier     = "${null_resource.snapshot_constants.triggers.final_snapshot_identifier}",
-    number_of_snapshots_to_retain = "${var.number_of_snapshots_to_retain == "ALL" ? -1 : var.number_of_snapshots_to_retain }",
-    identifier                    = "${var.identifier}"
-    is_cluster                    = "${var.is_cluster? "True" : "False"}"
-  }
-}
-
-data "archive_file" "maintain-rds-final-snapshots-zip" {
-  type = "zip"
-  output_path = "${path.module}/lambda/maintain-rds-final-snapshots.py.zip"
-
-  source {
-    content  = "${data.template_file.maintain-rds-final-snapshots.rendered}"
-    filename = "maintain_rds_final_snapshots.py"
-  }
-}
-
-resource "aws_lambda_function" "maintain-rds-final-snapshots" {
-  filename = "${substr(data.archive_file.maintain-rds-final-snapshots-zip.output_path, length(path.cwd) + 1, -1)}"
+module "maintain-rds-final-snapshots-lambda" {
+  source = "../rds_snapshot_maintenance_lambda"
+  include_this_module="${length(var.shared_lambda_function_name)==0}"
   function_name = "maintain_rds_final_snapshots_${var.identifier}"
-  role = "${aws_iam_role.maintain-rds-final-snapshots-role.arn}"
-  handler = "maintain_rds_final_snapshots.handler"
-  source_code_hash = "${data.archive_file.maintain-rds-final-snapshots-zip.output_base64sha256}"
-  runtime = "python2.7"
-  description = "MANAGED BY TERRAFORM"
 }
+
+data "aws_lambda_function" "maintain-rds-final-snapshots" {
+  count="${length(var.shared_lambda_function_name)>0 ? 1 : 0}"
+  function_name="${var.shared_lambda_function_name}"
+}
+
+locals {
+  function_name = "${length(var.shared_lambda_function_name)>0 ? var.shared_lambda_function_name : module.maintain-rds-final-snapshots-lambda.function_name}"
+  function_arn  = "${replace(element(concat(data.aws_lambda_function.maintain-rds-final-snapshots.*.arn, list(module.maintain-rds-final-snapshots-lambda.arn)), 0), ":$LATEST", "")}"
+  function_role = "${element(split("/",element(concat(data.aws_lambda_function.maintain-rds-final-snapshots.*.role, list(module.maintain-rds-final-snapshots-lambda.role)), 0)), 1)}"
+}
+
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -55,26 +40,6 @@ resource "aws_lambda_function" "maintain-rds-final-snapshots" {
 #   * Delete DBInstance/Cluster snapshots
 #   * Write an SSM Parameter
 # ---------------------------------------------------------------------------------------------------------------------
-resource "aws_iam_role" "maintain-rds-final-snapshots-role" {
-  name = "maintain_rds_final_snapshots_${var.identifier}_role"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-}
-
-
 locals {
   # Interpolate with the IAM Policy to create a policy specific to either DB Instance or DB Cluster snapshots.
   cluster="${var.is_cluster ? "Cluster" : ""}"
@@ -113,9 +78,8 @@ resource "aws_iam_policy" "maintain-rds-final-snapshots-policy" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "attach-policy" {
-  name = "attach-policy-to-maintain-rds-final-snapshots_${var.identifier}_role"
-  roles = ["${aws_iam_role.maintain-rds-final-snapshots-role.name}"]
+resource "aws_iam_role_policy_attachment" "attach-policy" {
+  role = "${local.function_role}"
   policy_arn = "${aws_iam_policy.maintain-rds-final-snapshots-policy.arn}"
 }
 
@@ -147,7 +111,15 @@ resource "aws_cloudwatch_event_rule" "maintain-rds-final-snapshot" {
 
 resource "aws_cloudwatch_event_target" "maintain-rds-final-snapshot" {
   rule  = "${aws_cloudwatch_event_rule.maintain-rds-final-snapshot.name}"
-  arn   = "${aws_lambda_function.maintain-rds-final-snapshots.arn}"
+  arn   = "${local.function_arn}"
+  input = <<EOF
+{
+    "final_snapshot_identifier": "${null_resource.snapshot_constants.triggers.final_snapshot_identifier}",
+    "number_of_snapshots_to_retain": ${var.number_of_snapshots_to_retain == "ALL" ? -1 : var.number_of_snapshots_to_retain},
+    "identifier": "${var.identifier}",
+    "is_cluster": "${var.is_cluster? "True" : "False"}"
+}
+EOF
 }
 
 
@@ -157,7 +129,7 @@ resource "aws_cloudwatch_event_target" "maintain-rds-final-snapshot" {
 resource "aws_lambda_permission" "allow-cloudwatch-to-call-maintain-rds-final-snapshot-lambda" {
   statement_id = "AllowExecutionFromCloudWatch_maintain-rds-final-snapshot-${null_resource.snapshot_constants.triggers.final_snapshot_identifier}"
   action = "lambda:InvokeFunction"
-  function_name = "${aws_lambda_function.maintain-rds-final-snapshots.function_name}"
+  function_name = "${local.function_name}"
   principal = "events.amazonaws.com"
   source_arn = "${aws_cloudwatch_event_rule.maintain-rds-final-snapshot.arn}"
 }

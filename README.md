@@ -154,12 +154,57 @@ resource "aws_rds_cluster" "aurora" {
 }
 ```
 
+Advanced Usage - Shared Lambda
+------------------------------
+This module creates one "Lambda" function for every database or cluster which is maintained by it.
+This should not incur additional costs, because Lambdas are charged for execution and not storage; but it will clutter
+up the Lambda web console (for example) with numerous Lambda functions if you use a lot of databases or clusters.
+
+To avoid this, it is possible to generate just one 'global' Lambda function, and then refer to it.
+
+The global Lambda function must be defined in a separate Terraform Configuration to the databases which it maintains.
+One suggestion is to have an "account_bootstrap" configuration which will create shared infastructure and IAM roles
+- this is the perfect place to add the global Lambda.
+
+An [example of shared lambda usage](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-shared-lambda) 
+is listed in the examples section below.  For completeness, a brief example is also included here.
+
+```hcl
+module "global_lambda" {
+  source = "../../../modules/rds_snapshot_maintenance_lambda"
+  function_name = "global_shared_rds_snapshot_maintenance"
+}
+```
+
+... then in a different folder on disk (a different Terraform configuration)
+
+```hcl
+module "snapshot_maintenance" {
+  source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
+
+  shared_lambda_function_name = "global_shared_rds_snapshot_maintenance"
+  first_run="${var.first_run}"
+  first_run_snapshot_identifier="some_known_snapshot"
+  identifier="instance_identifier"
+  is_cluster=false
+  database_endpoint="${aws_db_instance.database.endpoint}"
+  number_of_snapshots_to_retain=3
+}
+
+# Or this can be an aws_rds_cluster
+resource "aws_db_instance" "database" {
+  # ...
+}
+```
+
+
 Examples
 --------
 
 * [Complete RDS example for MySQL using official Terraform RDS Module](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-rds-module)
 * [Complete Aurora example](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-aurora)
 * [Complete RDS MySQL example](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-rds)
+* [Shared Lambda Example](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/examples/example-with-shared-lambda)
 
 Terraform Version
 -----------------

@@ -1,14 +1,14 @@
 import boto3
 
 # ---------------------------------------------------------------------------------------------------------------------
-# SNAPSHOT MANAGEMENT FOR ${identifier}
+# RDS SNAPSHOT MANAGEMENT ${function_name}
 #
 # terraform-aws-rds-finalsnapshot
 # Copyright 2018 Connect Group
 #
 # Create a SSM Parameter that maintains the id of the snapshot to restore after a `terraform destroy`.
 #
-# The SSM Parameter is called "/rds_final_snapshot/${identifier}/snapshot_to_restore"
+# The SSM Parameter is called "/rds_final_snapshot/{identifier}/snapshot_to_restore"
 # The SSM Parameter is not managed by Terraform, so will not be destroyed with the database and other infrastructure.
 #
 # Also, delete old final snapshots, retaining only as many as are specified in `number_of_snapshots_to_retain`
@@ -26,13 +26,28 @@ rds = boto3.client('rds')
 # ---------------------------------------------------------------------------------------------------------------------
 def handler(event,context):
 
-  final_snapshot_identifier = "${final_snapshot_identifier}"
-  number_of_snapshots_to_retain = ${number_of_snapshots_to_retain}
-  identifier = "${identifier}"
-  is_cluster = ${is_cluster}
+  if 'final_snapshot_identifier' in event:
+    final_snapshot_identifier = event['final_snapshot_identifier']
+  else:
+    raise Exception('final_snapshot_identifier not supplied!')
+
+  if 'number_of_snapshots_to_retain' in event:
+    number_of_snapshots_to_retain = event['number_of_snapshots_to_retain']
+  else:
+    raise Exception('number_of_snapshots_to_retain not supplied!')
+
+  if 'identifier' in event:
+    identifier = event['identifier']
+  else:
+    raise Exception('identifier not supplied!')
+
+  if 'is_cluster' in event:
+    is_cluster = str(event['is_cluster']).lower() == 'true'
+  else:
+    raise Exception('is_cluster not supplied!')
 
   # -------------------------------------------------------------------------------------------------------------------
-  # 1. Update SSM Parameter /rds_final_snapshot/${identifier}/snapshot_to_restore
+  # 1. Update SSM Parameter /rds_final_snapshot/{identifier}/snapshot_to_restore
   #    with value of final_snapshot_identifier.
   # -------------------------------------------------------------------------------------------------------------------
   ssm = boto3.client('ssm')

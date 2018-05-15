@@ -8,14 +8,25 @@ AWS RDS Snapshot Maintenance Module
 
 Terraform Module users are encouraged to use this submodule directly rather than use the root module.
 
+This module will ensure that a database or cluster which is associated with the module, will have its final snapshots
+configured in such a way that you can apply/destroy/apply/destroy your database and it will be restored on each apply.
+
+This module handles rotation of/unique names for the final snapshot: and solves a flaw which can occur when
+destroying a database: if a final snapshot already exists then the destroy will fail.  
+
+The module will also delete old final snapshots, while retaining a number specified by the 
+`number_of_snapshots_to_retain` variable.
+
+*On the `first_run` only*, the optional variable `first_run_snapshot_identifier` *may* be used to specify
+a known snapshot from which to create the database.  On subsequent runs, this variable is ignored.
+
+How it works
+------------
 This module will generate a final_snapshot_identifier: this is the name of the snapshot which will be created when
 the database or cluster is destroyed.
 
 This module will also generate a snapshot_identifier if this is not the `first_run`, which identifies the snapshot to
 restore the database from.
-
-*On the `first_run` only*, the optional variable `first_run_snapshot_identifier` may be used to specify
-a known snapshot from which to create the database.  On subsequent runs, this variable is ignored.
 
 This module will also create an SSM Parameter, which acts as an alias to the last created final_snapshot.
 The SSM Parameter must exist outside of Terraform control, since it should not be destroyed; so a Lambda

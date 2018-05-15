@@ -6,14 +6,8 @@ provider "aws" {
 }
 
 ##############################################################
-# terraform-aws-rds-finalsnapshot Modules
+# terraform-aws-rds-finalsnapshot Module
 ##############################################################
-//module "snapshot_identifiers" {
-//  source = "../../modules/rds_snapshot_identifiers"
-//
-//  identifier="demodb"
-//}
-
 module "snapshot_maintenance" {
   source="../../modules/rds_snapshot_maintenance"
 

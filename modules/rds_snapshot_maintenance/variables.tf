@@ -30,3 +30,8 @@ variable "number_of_snapshots_to_retain" {
   default=1
   description = "(Optional) Number of final snapshots to retain after restoration.  Minimum 0.  Can be set to the string 'ALL' in which case snapshots are never deleted.  Default: 1"
 }
+
+variable "shared_lambda_function_name" {
+  default=""
+  description = "(Optional) If specified, will look for and use a shared lambda, instead of creating one lambda per managed database/cluster."
+}

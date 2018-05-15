@@ -48,8 +48,8 @@ database instance, but does not have the full flexibility of a more complete dat
 
 The Root module calls these submodules which can (and should) be used to create independent resources:
                 
-* [rds_snapshot_identifiers](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/modules/rds_snapshot_identifiers) - calculates Snapshot identifiers
-* [rds_snapshot_maintenance](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/modules/rds_snapshot_maintenance) - deletes old Snapshots
+* [rds_snapshot_maintenance](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/modules/rds_snapshot_maintenance) - deletes old Snapshots, calculates Snapshot identifiers
+* [rds_snapshot_maintenance_lambda](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/modules/rds_snapshot_identifiers) - helper lambda 
 
 > ###### IMPORTANT
 > When using the child modules directly, both of them must be used, even if you do not want to delete old snapshots.  

@@ -46,7 +46,7 @@ locals {
 }
 
 resource "aws_iam_policy" "maintain-rds-final-snapshots-policy" {
-  name = "maintain_rds_final_snapshots_${var.identifier}_policy"
+  name = "manage_finalsnapshot_${var.identifier}_policy"
   path = "/"
   description = "MANAGED BY TERRAFORM Allow Lambda to delete/copy/manage db snapshots"
   policy = <<EOF
@@ -98,7 +98,7 @@ locals {
 }
 
 resource "aws_cloudwatch_event_rule" "maintain-rds-final-snapshot" {
-  name = "trigger_maintain-rds-final-snapshot-${var.identifier}"
+  name = "manage-finalsnapshot-${var.identifier}"
 
   # The database_endpoint is here primarily to ensure the cloudwatch event is created after the database.
   description = "TERRAFORMED: maintain-rds-final-snapshot ${var.database_endpoint}"

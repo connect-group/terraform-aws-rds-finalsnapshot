@@ -127,7 +127,7 @@ EOF
 # Allow Cloudwatch to execute the Lambda.
 # ---------------------------------------------------------------------------------------------------------------------
 resource "aws_lambda_permission" "allow-cloudwatch-to-call-maintain-rds-final-snapshot-lambda" {
-  statement_id = "AllowExecutionFromCloudWatch_maintain-rds-final-snapshot-${null_resource.snapshot_constants.triggers.final_snapshot_identifier}"
+  statement_id = "manage-rds-finalsnapshot-${null_resource.snapshot_constants.triggers.final_snapshot_identifier}"
   action = "lambda:InvokeFunction"
   function_name = "${local.function_name}"
   principal = "events.amazonaws.com"

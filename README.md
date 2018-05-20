@@ -1,13 +1,6 @@
 AWS RDS Final Snapshot Management Module
 ========================================
 
-> ###### IMPORTANT
-> The first time this configuration is applied the `first_run` variable passed to the modules must be `true`.
->
-> All subsequent applies should have `first_run` set to false or ommitted (as false is default).
->
-> Please read all of the README if using or maintaining this module.
-
 This module, or specifically the submodule `rds_snapshot_maintenance` will manage 
 Final Snapshots of AWS database instances and clusters to ensure that infrastructure can be backed up, destroyed, 
 and restored.
@@ -27,16 +20,11 @@ This module supports creation of a database; and subsequent restoration of a dat
 > Destroying infrastructure is by its nature destructive - when developing an environment,
 > take plenty of manual backups until you have tested your infrastructure code! 
 
-This module can be used from the command-line and can also be used within a CI environment, but there is one manual
-step.  The very first time the database is created, the "first_run" variable must be set to true.  On all other runs,
-it should be set to false.
+This module can be used from the command-line and can also be used within a CI environment.
 
-This can be handled as follows,
+Backups are created and restored as follows,
 
-    # First run
-    terraform apply -var first_run=true
-    
-    # Subsequent runs: (warning, wait 3 minutes before destroying) 
+    terraform apply
     terraform destroy
     terraform apply
     terraform destroy
@@ -62,8 +50,6 @@ Usage With 'Built-In' Simple MySQL Instance
 module "db_with_final_snapshot_management" {
   source = "connect-group/rds-finalsnapshot/aws"
 
-  first_run = "{$var.first_run}"
-
   instance_identifier = "demodb"
   instance_class      = "db.t2.micro"
   allocated_storage   = 5
@@ -83,7 +69,6 @@ Usage With Official Terraform RDS Module
 module "snapshot_maintenance" {
   source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
-  first_run="${var.first_run}"
   identifier="demodb"
 
   is_cluster=false
@@ -130,7 +115,6 @@ Usage With Aurora Cluster
 module "snapshot_maintenance" {
   source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
-  first_run="${var.first_run}"
   identifier="democluster"
 
   is_cluster=true
@@ -183,7 +167,7 @@ module "snapshot_maintenance" {
   source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
   shared_lambda_function_name = "global_shared_rds_snapshot_maintenance"
-  first_run="${var.first_run}"
+
   first_run_snapshot_identifier="some_known_snapshot"
   identifier="instance_identifier"
   is_cluster=false

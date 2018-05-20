@@ -3,13 +3,15 @@
 # ---------------------------------------------------------------------------------------------------------------------
 output "snapshot_to_restore" {
   description="String. Name of the snapshot which a database instance/cluster should restore on creation."
-  value="${null_resource.snapshot_constants.triggers.snapshot_to_restore}"
+  value="${local.snapshot_to_restore}"
 }
 
 output "final_snapshot_identifier" {
   description="String. Name of the snapshot which a database instance/cluster should create when destroyed."
-  value="${null_resource.snapshot_constants.triggers.final_snapshot_identifier}"
+  value="${local.final_snapshot_identifier}"
 }
+//    snapshot_to_restore = "${local.snapshot_to_restore}"
+//    final_snapshot_identifier = "${format("%s-final-snapshot-%05d", var.identifier, local.first_run? 1 : substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1)+1)}"
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Echo the input variables for convenience - so snapshot_maintenance module can refer to this module rather than

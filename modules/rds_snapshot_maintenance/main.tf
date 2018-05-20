@@ -88,6 +88,8 @@ resource "aws_iam_role_policy_attachment" "attach-policy" {
 # Generate a cron() schedule from a timestamp which will run just once, 3 minutes after the database is
 # created/restored.
 # ---------------------------------------------------------------------------------------------------------------------
+
+# TODO modify the lambda so it is run immediately using the new lambda-exec module
 locals {
   #2017-11-22T00:10:00Z -> cron(10 00 22 11 ? 2017)
   #Database endpoint is added to force the timestamp to be generated after the database has been created
@@ -114,7 +116,7 @@ resource "aws_cloudwatch_event_target" "maintain-rds-final-snapshot" {
   arn   = "${local.function_arn}"
   input = <<EOF
 {
-    "final_snapshot_identifier": "${null_resource.snapshot_constants.triggers.final_snapshot_identifier}",
+    "final_snapshot_identifier": "${local.final_snapshot_identifier}",
     "number_of_snapshots_to_retain": ${var.number_of_snapshots_to_retain == "ALL" ? -1 : var.number_of_snapshots_to_retain},
     "identifier": "${var.identifier}",
     "is_cluster": "${var.is_cluster? "True" : "False"}"
@@ -127,7 +129,7 @@ EOF
 # Allow Cloudwatch to execute the Lambda.
 # ---------------------------------------------------------------------------------------------------------------------
 resource "aws_lambda_permission" "allow-cloudwatch-to-call-maintain-rds-final-snapshot-lambda" {
-  statement_id = "manage-rds-finalsnapshot-${null_resource.snapshot_constants.triggers.final_snapshot_identifier}"
+  statement_id = "manage-rds-finalsnapshot-${local.final_snapshot_identifier}"
   action = "lambda:InvokeFunction"
   function_name = "${local.function_name}"
   principal = "events.amazonaws.com"

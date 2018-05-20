@@ -15,7 +15,6 @@ provider "aws" {
 module "snapshot_maintenance" {
   source="../../modules/rds_snapshot_maintenance"
 
-  first_run="${var.first_run}"
   is_cluster=false
   identifier="demodb"
   database_endpoint="${module.db.this_db_instance_endpoint}"

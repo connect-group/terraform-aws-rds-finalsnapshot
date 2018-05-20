@@ -2,10 +2,6 @@
 # The following variables define how final snapshots are handled.
 # ---------------------------------------------------------------------------------------------------------------------
 
-variable "first_run" {
-  description = "(Required) Should always be set to 'true' the first time a database is created.  If true, assumes that there is no backup to restore.  After the first run, can be set to false."
-}
-
 variable "instance_identifier" {
   description = "(Required) Unique Database Instance identifier.  IMPORTANT: This cannot be randomly generated, since to restore a snapshot you need to know the instance identifier!"
 }

@@ -16,7 +16,6 @@ module "snapshot_maintenance_1" {
   source="../../../modules/rds_snapshot_maintenance"
 
   shared_lambda_function_name = "global_shared_rds_snapshot_maintenance"
-  first_run="${var.first_run}"
   identifier="demodbinstance1"
   is_cluster=false
   database_endpoint="${aws_db_instance.database1.endpoint}"
@@ -43,7 +42,6 @@ module "snapshot_maintenance_2" {
   source="../../../modules/rds_snapshot_maintenance"
 
   shared_lambda_function_name = "global_shared_rds_snapshot_maintenance"
-  first_run="${var.first_run}"
   identifier="demodbinstance2"
   is_cluster=false
   database_endpoint="${aws_db_instance.database2.endpoint}"

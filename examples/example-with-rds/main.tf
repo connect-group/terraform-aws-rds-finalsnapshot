@@ -24,7 +24,6 @@ module "snapshot_maintenance" {
   #   source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
   #   version="1.0.0"
   source="../../modules/rds_snapshot_maintenance"
-  first_run="${var.first_run}"
   identifier="demodbinstance"
   is_cluster=false
   database_endpoint="${aws_db_instance.database.endpoint}"
@@ -45,4 +44,5 @@ resource "aws_db_instance" "database" {
   parameter_group_name = "default.mysql5.7"
   snapshot_identifier = "${module.snapshot_maintenance.snapshot_to_restore}"
   final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
+  backup_retention_period = 0
 }

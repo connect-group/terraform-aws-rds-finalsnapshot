@@ -25,7 +25,6 @@ module "snapshot_maintenance" {
 
   source="./modules/rds_snapshot_maintenance"
 
-  first_run="${var.first_run}"
   identifier="${var.instance_identifier}"
   override_restore_snapshot_identifier="${var.override_restore_snapshot_identifier}"
 

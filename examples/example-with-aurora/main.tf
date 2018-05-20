@@ -12,7 +12,6 @@ provider "aws" {
 module "snapshot_maintenance" {
   source="../../modules/rds_snapshot_maintenance"
 
-  first_run="${var.first_run}"
   identifier="democluster"
   is_cluster=true
   database_endpoint="${aws_rds_cluster.aurora.endpoint}"

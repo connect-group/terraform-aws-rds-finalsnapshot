@@ -17,8 +17,9 @@ destroying a database: if a final snapshot already exists then the destroy will 
 The module will also delete old final snapshots, while retaining a number specified by the 
 `number_of_snapshots_to_retain` variable.
 
-*On the `first_run` only*, the optional variable `first_run_snapshot_identifier` *may* be used to specify
-a known snapshot from which to create the database.  On subsequent runs, this variable is ignored.
+* The optional variable `override_restore_snapshot_identifier` *may* be used to specify
+a known snapshot from which to create the database.  This allows for restoration of the database from another
+environment, or from a backup N days ago.
 
 How it works
 ------------

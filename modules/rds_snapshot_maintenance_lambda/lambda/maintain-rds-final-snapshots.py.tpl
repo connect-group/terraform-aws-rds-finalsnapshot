@@ -6,14 +6,7 @@ import boto3
 # terraform-aws-rds-finalsnapshot
 # Copyright 2018 Connect Group
 #
-# Create a SSM Parameter that maintains the id of the snapshot to restore after a `terraform destroy`.
-#
-# The SSM Parameter is called "/rds_final_snapshot/{identifier}/snapshot_to_restore"
-# The SSM Parameter is not managed by Terraform, so will not be destroyed with the database and other infrastructure.
-#
-# Also, delete old final snapshots, retaining only as many as are specified in `number_of_snapshots_to_retain`
-#
-# The lambda runs just once, within 3 minutes of creation, and should not be run again.
+# Delete old final snapshots, retaining only as many as are specified in `number_of_snapshots_to_retain`
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Global so that `get_all_db_cluster_snapshots`, `get_all_db_snapshots` and `handler` can access the AWS RDS API.
@@ -47,21 +40,7 @@ def handler(event,context):
     raise Exception('is_cluster not supplied!')
 
   # -------------------------------------------------------------------------------------------------------------------
-  # 1. Update SSM Parameter /rds_final_snapshot/{identifier}/snapshot_to_restore
-  #    with value of final_snapshot_identifier.
-  # -------------------------------------------------------------------------------------------------------------------
-  ssm = boto3.client('ssm')
-  ssm.put_parameter(
-    Name='/rds_final_snapshot/'+ identifier + '/snapshot_to_restore',
-    Value=final_snapshot_identifier,
-    Type='String',
-    Overwrite=True)
-
-  # Put something in the Cloudwatch Log.
-  print "Tracked /rds_final_snapshot/" + identifier + "/snapshot_to_restore = " + final_snapshot_identifier
-
-  # -------------------------------------------------------------------------------------------------------------------
-  # 2. Remove old db final snapshots
+  # Remove old db final snapshots
   # -------------------------------------------------------------------------------------------------------------------
   if number_of_snapshots_to_retain >= 0:
 

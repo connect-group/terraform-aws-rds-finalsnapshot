@@ -12,6 +12,11 @@ terraform {
   required_version = ">=0.11.2"
 }
 
+# TODO if we use the new lambda-exec module we wont need the first_run stuff and can just look
+# for the final_snapshot_identifier whenever apply is run in a lambda.
+# Wont need the CRON either, but it means snapshot maintenance will happen on apply.
+# Should be a lot neater !
+
 #
 # An SSM Parameter (non-secure) managed outside of terraform, so it will live beyond a 'destroy', just as the
 # database final snapshot is created on destroy but not managed by Terraform.
@@ -23,7 +28,8 @@ data "aws_ssm_parameter" "snapshot_to_restore" {
 
 locals {
   # Defined as a local because we use it twice in the snapshot_constants block below.
-  snapshot_to_restore = "${element(concat(data.aws_ssm_parameter.snapshot_to_restore.*.value, list(var.first_run_snapshot_identifier)), 0)}"
+  previous_final_snapshot = "${element(concat(data.aws_ssm_parameter.snapshot_to_restore.*.value, list("")), 0)}"
+  snapshot_to_restore = "${length(var.override_restore_snapshot_identifier) > 0 ? var.override_restore_snapshot_identifier : local.previous_final_snapshot}"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -36,7 +42,7 @@ locals {
 resource "null_resource" "snapshot_constants" {
   triggers {
     snapshot_to_restore = "${local.snapshot_to_restore}"
-    final_snapshot_identifier = "${format("%s-final-snapshot-%05d", var.identifier, var.first_run? 1 : substr(format("%s%s","00000",local.snapshot_to_restore),-5,-1)+1)}"
+    final_snapshot_identifier = "${format("%s-final-snapshot-%05d", var.identifier, var.first_run? 1 : substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1)+1)}"
   }
 
   lifecycle {

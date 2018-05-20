@@ -92,10 +92,7 @@ output "status" {
   description = "The RDS instance status."
   value="${aws_db_instance.database.status}"
 }
-output "storage_encrypted" {
-  description = "Specifies whether the DB instance is encrypted."
-  value="${aws_db_instance.database.storage_encrypted}"
-}
+
 output "username" {
   description = "The master username for the database."
   value="${aws_db_instance.database.username}"

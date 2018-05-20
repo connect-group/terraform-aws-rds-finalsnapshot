@@ -27,7 +27,7 @@ module "snapshot_maintenance" {
 
   first_run="${var.first_run}"
   identifier="${var.instance_identifier}"
-  first_run_snapshot_identifier="${var.first_run_snapshot_identifier}"
+  override_restore_snapshot_identifier="${var.override_restore_snapshot_identifier}"
 
   is_cluster=false
   database_endpoint="${aws_db_instance.database.endpoint}"

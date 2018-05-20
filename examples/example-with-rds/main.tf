@@ -8,6 +8,13 @@
 # such as `terraform-aws-modules/rds/aws` or `claranet/aurora/aws` (for example) giving the user complete flexibility 
 # over the database or cluster they wish to create.
 # ---------------------------------------------------------------------------------------------------------------------
+terraform {
+  required_version = ">=0.11.2"
+}
+
+provider "aws" {
+  region = "eu-west-1"
+}
 
 module "snapshot_maintenance" {
   # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
@@ -22,6 +29,7 @@ module "snapshot_maintenance" {
   is_cluster=false
   database_endpoint="${aws_db_instance.database.endpoint}"
   number_of_snapshots_to_retain=1
+  override_restore_snapshot_identifier = "${var.restore_snapshot}"
 }
 
 resource "aws_db_instance" "database" {

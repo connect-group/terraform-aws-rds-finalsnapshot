@@ -48,17 +48,17 @@ def handler(event,context):
   if 'identifier' in inputs:
     identifier=inputs['identifier']
   else:
-    sendResponse(event, context, "FAILURE", {"Error": "identifier not specified"})
+    sendResponse(event, context, "FAILED", {"Error": "identifier not specified"})
     return
 
   if 'final_snapshot_prefix' in inputs:
     final_snapshot_prefix=inputs['final_snapshot_prefix']
   else:
-    sendResponse(event, context, "FAILURE", {"Error": "final_snapshot_prefix not specified"})
+    sendResponse(event, context, "FAILED", {"Error": "final_snapshot_prefix not specified"})
     return
 
   if 'is_cluster' in inputs:
-    is_cluster = str(inputs['is_cluster']).lower() == 'true'
+    is_cluster = (inputs['is_cluster'].lower() == 'true' or inputs['is_cluster'] == '1')
   else:
     is_cluster = False
 

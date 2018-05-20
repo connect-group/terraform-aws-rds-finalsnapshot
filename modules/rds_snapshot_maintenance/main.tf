@@ -38,7 +38,6 @@ locals {
 #   * Log to Cloudwatch logs
 #   * Describe Snapshots for a DBInstance/Cluster
 #   * Delete DBInstance/Cluster snapshots
-#   * Write an SSM Parameter
 # ---------------------------------------------------------------------------------------------------------------------
 locals {
   # Interpolate with the IAM Policy to create a policy specific to either DB Instance or DB Cluster snapshots.
@@ -67,11 +66,6 @@ resource "aws_iam_policy" "maintain-rds-final-snapshots-policy" {
             "Effect": "Allow",
             "Action": [ "rds:DeleteDB${local.cluster}Snapshot" ],
             "Resource": "arn:aws:rds:*:*:${var.is_cluster ? "cluster-snapshot" : "snapshot"}:${format("%s-final-snapshot-", var.identifier)}*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [ "ssm:PutParameter" ],
-            "Resource": "arn:aws:ssm:*:*:parameter/rds_final_snapshot/${var.identifier}/snapshot_to_restore"
         }
     ]
 }
@@ -83,56 +77,27 @@ resource "aws_iam_role_policy_attachment" "attach-policy" {
   policy_arn = "${aws_iam_policy.maintain-rds-final-snapshots-policy.arn}"
 }
 
-
 # ---------------------------------------------------------------------------------------------------------------------
-# Generate a cron() schedule from a timestamp which will run just once, 3 minutes after the database is
-# created/restored.
+# Execute Lambda, after attaching the policy and after creating the database.
 # ---------------------------------------------------------------------------------------------------------------------
+module "exec-maintenance-lambda-delete-old-snapshots" {
+  source              = "connect-group/lambda-exec/aws"
+  name                = "manage-finalsnapshot-for-${var.identifier}"
+  lambda_function_arn = "${local.function_arn}"
 
-# TODO modify the lambda so it is run immediately using the new lambda-exec module
-locals {
-  #2017-11-22T00:10:00Z -> cron(10 00 22 11 ? 2017)
-  #Database endpoint is added to force the timestamp to be generated after the database has been created
-  when = "${timeadd(timestamp(), "2m")}T${var.database_endpoint}"
-  time="${split(":", element(split("T", local.when),1))}"
-  date="${split("-", element(split("T", local.when),0))}"
-  schedule_expression="cron(${local.time[1]} ${local.time[0]} ${local.date[2]} ${local.date[1]} ? ${local.date[0]})"
-}
+  lambda_inputs = {
+    depends_on_policy             = "${aws_iam_role_policy_attachment.attach-policy.id}"
+    depends_on_database           = "${var.database_endpoint}"
 
-resource "aws_cloudwatch_event_rule" "maintain-rds-final-snapshot" {
-  name = "manage-finalsnapshot-${var.identifier}"
+    final_snapshot_identifier     = "${local.final_snapshot_identifier}"
+    number_of_snapshots_to_retain = "${var.number_of_snapshots_to_retain == "ALL" ? -1 : var.number_of_snapshots_to_retain}"
+    identifier                    = "${var.identifier}"
+    is_cluster                    = "${var.is_cluster? "True" : "False"}"
 
-  # The database_endpoint is here primarily to ensure the cloudwatch event is created after the database.
-  description = "TERRAFORMED: maintain-rds-final-snapshot ${var.database_endpoint}"
-  schedule_expression = "${local.schedule_expression}"
-
-  lifecycle {
-    ignore_changes = ["schedule_expression"]
+    //run_on_every_apply = "${timestamp()}"
   }
-}
 
-resource "aws_cloudwatch_event_target" "maintain-rds-final-snapshot" {
-  rule  = "${aws_cloudwatch_event_rule.maintain-rds-final-snapshot.name}"
-  arn   = "${local.function_arn}"
-  input = <<EOF
-{
-    "final_snapshot_identifier": "${local.final_snapshot_identifier}",
-    "number_of_snapshots_to_retain": ${var.number_of_snapshots_to_retain == "ALL" ? -1 : var.number_of_snapshots_to_retain},
-    "identifier": "${var.identifier}",
-    "is_cluster": "${var.is_cluster? "True" : "False"}"
+  lambda_outputs = [
+    "Error",
+  ]
 }
-EOF
-}
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-# Allow Cloudwatch to execute the Lambda.
-# ---------------------------------------------------------------------------------------------------------------------
-resource "aws_lambda_permission" "allow-cloudwatch-to-call-maintain-rds-final-snapshot-lambda" {
-  statement_id = "manage-rds-finalsnapshot-${local.final_snapshot_identifier}"
-  action = "lambda:InvokeFunction"
-  function_name = "${local.function_name}"
-  principal = "events.amazonaws.com"
-  source_arn = "${aws_cloudwatch_event_rule.maintain-rds-final-snapshot.arn}"
-}
-

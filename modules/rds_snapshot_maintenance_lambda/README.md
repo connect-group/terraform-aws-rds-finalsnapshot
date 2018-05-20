@@ -3,9 +3,10 @@ AWS RDS Snapshot Lambda Module
 
 Terraform Module users are encouraged to use this submodule directly rather than use the root module.
 
-This module will create a Lambda function which is used by the rds_snapshot_maintenance module to
-manage SSM Parameters (alias/track name of final snapshots) and also, delete older final snapshost
-as per the retention variable.
+This module will create two Lambda functions,
+ 
+1. Lambda which is used by the rds_snapshot_maintenance module to identify final snaphots, and
+2. Lambda which deletes older final snapshots as per the retention variable.
 
 If you wish to reduce the number of Lambda functions in your environment, and have multiple databases
 or clusters which need to be destroyed and recreated on a regular basis, then you can create one
@@ -33,8 +34,6 @@ module "snapshot_maintenance" {
   source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
 
   shared_lambda_function_name = "global_shared_rds_snapshot_maintenance"
-  first_run="${var.first_run}"
-  first_run_snapshot_identifier="some_known_snapshot"
   identifier="instance_identifier"
   is_cluster=false
   database_endpoint="${aws_db_instance.database.endpoint}"

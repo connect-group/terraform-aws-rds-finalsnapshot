@@ -3,7 +3,7 @@
 # ---------------------------------------------------------------------------------------------------------------------
 data "template_file" "maintain-rds-final-snapshots" {
   count="${var.include_this_module?1:0}"
-  template = "${file("${path.module}/lambda/maintain-rds-final-snapshots.py.tpl")}"
+  template = "${file("${path.module}/lambda/maintain-rds-final-snapshots.py")}"
   vars {
     function_name = "${var.function_name}"
   }
@@ -58,7 +58,7 @@ EOF
 # ---------------------------------------------------------------------------------------------------------------------
 data "template_file" "find-final-snapshot" {
   count="${var.include_this_module?1:0}"
-  template = "${file("${path.module}/lambda/find-final-snapshot.py.tpl")}"
+  template = "${file("${path.module}/lambda/find-final-snapshot.py")}"
   vars {
     function_name = "${var.function_name}Q"
   }

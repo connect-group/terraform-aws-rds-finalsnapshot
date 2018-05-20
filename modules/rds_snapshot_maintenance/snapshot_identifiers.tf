@@ -85,26 +85,8 @@ module "find_final_snapshot" {
 # ---------------------------------------------------------------------------------------------------------------------
 locals {
   # Defined as a local because we use it twice in the snapshot_constants block below.
-  previous_final_snapshot = "${module.find_final_snapshot.result["SnapshotIdentifier"]}"
+  previous_final_snapshot = "${lookup(module.find_final_snapshot.result, "SnapshotIdentifier", "")}"
   snapshot_to_restore     = "${length(var.override_restore_snapshot_identifier) > 0 ? var.override_restore_snapshot_identifier : local.previous_final_snapshot}"
   first_run               = "${length(local.previous_final_snapshot) == 0}"
   final_snapshot_identifier="${format("%s-final-snapshot-%05d", var.identifier, local.first_run? 1 : substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1)+1)}"
 }
-
-# ---------------------------------------------------------------------------------------------------------------------
-# Tip:
-# A Null resource can act as a set of constants which once defined, will not change unless destroyed/deleted from
-# the terraform configuration.
-#
-# For this to work, you must set the lifecycle { ignore_changes = triggers } as below.
-# ---------------------------------------------------------------------------------------------------------------------
-//resource "null_resource" "snapshot_constants" {
-//  triggers {
-//    snapshot_to_restore = "${local.snapshot_to_restore}"
-//    final_snapshot_identifier = "${format("%s-final-snapshot-%05d", var.identifier, local.first_run? 1 : substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1)+1)}"
-//  }
-//
-//  lifecycle {
-//    ignore_changes = ["triggers"]
-//  }
-//}

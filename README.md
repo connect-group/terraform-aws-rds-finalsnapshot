@@ -168,7 +168,6 @@ module "snapshot_maintenance" {
 
   shared_lambda_function_name = "global_shared_rds_snapshot_maintenance"
 
-  first_run_snapshot_identifier="some_known_snapshot"
   identifier="instance_identifier"
   is_cluster=false
   database_endpoint="${aws_db_instance.database.endpoint}"
@@ -197,15 +196,14 @@ version 0.11.2.
 
 How does it work? (Under the hood)
 ----------------------------------
-This module creates a Lambda function which will run just once, after the database is created.  It is triggered by a 
-Cloudwatch scheduled event which will run just once, within 3 minutes of creation.
+This module creates a Lambda function which will run just once, after the database is created: it will remove  
+snapshots to ensure that the expected number of retained snapshots is met.
 
-This is required because Terraform data sources fail if a data source returns 0 results.  But after a destroy there
-can be no managed Terraform resources; hence, the Lambda maintains an SSM Parameter which is not managed by Terraform.
-
-AWS RDS maintains the final snapshot, which is not managed by Terraform; but on 'first run', and until the database is
-destroyed for the first time, that snapshot will not exist: so again, a data source cannot be used as it would cause
-Terraform to fail. 
+The AWS RDS service maintains the final snapshot, which is not managed by Terraform; but on 'first run', and until the 
+database is destroyed for the first time, that snapshot will not exist.  To detect the snapshot, a CloudFormation 
+CustomResource is used to execute a Lambda that checks for the existence of a snapshot.  See the  
+[terraform-aws-lambda-exec](https://github.com/connect-group/terraform-aws-lambda-exec) module for more information 
+about how to execute a Lambda during terraform execution.
 
 Authors
 -------

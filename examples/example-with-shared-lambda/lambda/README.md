@@ -1,4 +1,5 @@
 # Lambda
 
-This project simply creates a lambda called 'global_shared_rds_snapshot_maintenance' with an associated role.
+This project simply creates two lambdas called 'global_shared_rds_snapshot_maintenance' and
+'global_shared_rds_snapshot_maintenanceQ' with an associated role.
 

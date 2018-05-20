@@ -2,7 +2,7 @@ Final Snapshot used in conjunction with Aurora Cluster
 ======================================================
 This folder contains an example of an Aurora cluster deployed in AWS.
 
-1. The infrastructure is first created with `terraform apply -var first_run=true`
+1. The infrastructure is first created with `terraform apply`
 1. When destroyed with `terraform destroy`, a final snapshot will be taken.
 2. When recreated with `terraform apply`, (no first_run var this time) the snapshot will be restored.
 3. When destroyed with `terraform destroy`, a final snapshot will be taken and the previous final snapshot removed.
@@ -19,8 +19,8 @@ To run this example you need to execute:
 
 ```bash
 $ terraform init
-$ terraform plan -var first_run=true
-$ terraform apply -var first_run=true
+$ terraform plan 
+$ terraform apply
 $ terraform destroy
 $ terraform apply
 $ terraform destroy
@@ -34,7 +34,7 @@ resources.
 Tidying Up
 ----------
 If you want to clean up after the database, you will need to `terraform destroy` and then manually remove the final
-snapshot and SSM Parameter using the web console or the AWS command line tool.
+snapshot using the web console or the AWS command line tool.
 
 **Delete the snapshot**
 ```bash
@@ -44,11 +44,6 @@ $ aws --region=eu-west-1 rds describe-db-cluster-snapshots --db-cluster-identifi
 democluster-final-snapshot-00003
 
 $ aws --region=eu-west-1 rds delete-db-cluster-snapshot --db-cluster-snapshot-identifier "democluster-final-snapshot-00003"
-```
-
-**Delete the SSM Parameter**
-```bash
-$ aws ssm delete-parameter --name "/rds_final_snapshot/democluster/snapshot_to_restore"
 ```
 
  

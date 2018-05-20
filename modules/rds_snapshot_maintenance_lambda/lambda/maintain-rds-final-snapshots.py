@@ -1,4 +1,8 @@
 import boto3
+import json
+import httplib
+from urllib2 import build_opener, HTTPHandler, Request
+from botocore.exceptions import ClientError
 
 # ---------------------------------------------------------------------------------------------------------------------
 # RDS SNAPSHOT MANAGEMENT ${function_name}
@@ -19,25 +23,41 @@ rds = boto3.client('rds')
 # ---------------------------------------------------------------------------------------------------------------------
 def handler(event,context):
 
-  if 'final_snapshot_identifier' in event:
-    final_snapshot_identifier = event['final_snapshot_identifier']
-  else:
-    raise Exception('final_snapshot_identifier not supplied!')
+  if event['RequestType'] == "Delete":
+    sendResponse(event, context, "SUCCESS", {})
+    return
 
-  if 'number_of_snapshots_to_retain' in event:
-    number_of_snapshots_to_retain = event['number_of_snapshots_to_retain']
-  else:
-    raise Exception('number_of_snapshots_to_retain not supplied!')
+  responseStatus = "SUCCESS"
+  responseData   = {"Error":""}
 
-  if 'identifier' in event:
-    identifier = event['identifier']
+  if 'ResourceProperties' in event:
+      inputs = event['ResourceProperties']
   else:
-    raise Exception('identifier not supplied!')
+      raise Exception('ResourceProperties not supplied!')
 
-  if 'is_cluster' in event:
-    is_cluster = str(event['is_cluster']).lower() == 'true'
+  if 'final_snapshot_identifier' in inputs:
+    final_snapshot_identifier = inputs['final_snapshot_identifier']
   else:
-    raise Exception('is_cluster not supplied!')
+    sendResponse(event, context, "FAILED", {"Error": "final_snapshot_identifier not specified"})
+    return
+
+  if 'number_of_snapshots_to_retain' in inputs:
+    number_of_snapshots_to_retain = int(inputs['number_of_snapshots_to_retain'])
+  else:
+    sendResponse(event, context, "FAILED", {"Error": "number_of_snapshots_to_retain not supplied!"})
+    return
+
+  if 'identifier' in inputs:
+    identifier = inputs['identifier']
+  else:
+    sendResponse(event, context, "FAILED", {"Error": "identifier not supplied!"})
+    return
+
+  if 'is_cluster' in inputs:
+    is_cluster = (inputs['is_cluster'].lower() == 'true' or inputs['is_cluster'] == '1')
+  else:
+    sendResponse(event, context, "FAILED", {"Error": "is_cluster not supplied!"})
+    return
 
   # -------------------------------------------------------------------------------------------------------------------
   # Remove old db final snapshots
@@ -72,6 +92,8 @@ def handler(event,context):
           rds.delete_db_snapshot(DBSnapshotIdentifier=snapshot_identifier)
           print "Deleted DB Snapshot " + snapshot_identifier
 
+
+  sendResponse(event, context, responseStatus, responseData)
   return "Finished"
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -79,40 +101,67 @@ def handler(event,context):
 # begins with `snapshot_prefix`
 # ---------------------------------------------------------------------------------------------------------------------
 def get_all_db_cluster_snapshots(identifier, snapshot_prefix):
-    snapshots = []
+  snapshots = []
 
-    kwargs = { 'DBClusterIdentifier': identifier, 'SnapshotType': 'manual' }
-    while True:
-        resp = rds.describe_db_cluster_snapshots(**kwargs)
-        for snapshot in resp['DBClusterSnapshots']:
-          if snapshot['DBClusterSnapshotIdentifier'].startswith(snapshot_prefix):
-            snapshots.append(snapshot)
+  kwargs = { 'DBClusterIdentifier': identifier, 'SnapshotType': 'manual' }
+  while True:
+    resp = rds.describe_db_cluster_snapshots(**kwargs)
+    for snapshot in resp['DBClusterSnapshots']:
+      if snapshot['DBClusterSnapshotIdentifier'].startswith(snapshot_prefix):
+        snapshots.append(snapshot)
 
-        try:
-            kwargs['Marker'] = resp['Marker']
-        except KeyError:
-            break
+    try:
+      kwargs['Marker'] = resp['Marker']
+    except KeyError:
+      break
 
-    return snapshots
+  return snapshots
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Get a list of all DB Instance Snapshots applicable to the Cluster identifier, and whose snapshot identifier
 # begins with `snapshot_prefix`
 # ---------------------------------------------------------------------------------------------------------------------
 def get_all_db_snapshots(identifier, snapshot_prefix):
-    snapshots = []
+  snapshots = []
 
-    kwargs = { 'DBInstanceIdentifier': identifier, 'SnapshotType': 'manual' }
-    while True:
-        resp = rds.describe_db_snapshots(**kwargs)
+  kwargs = { 'DBInstanceIdentifier': identifier, 'SnapshotType': 'manual' }
+  while True:
+    resp = rds.describe_db_snapshots(**kwargs)
 
-        for snapshot in resp['DBSnapshots']:
-          if snapshot['DBSnapshotIdentifier'].startswith(snapshot_prefix):
-            snapshots.append(snapshot)
+    for snapshot in resp['DBSnapshots']:
+      if snapshot['DBSnapshotIdentifier'].startswith(snapshot_prefix):
+        snapshots.append(snapshot)
 
-        try:
-            kwargs['Marker'] = resp['Marker']
-        except KeyError:
-            break
+    try:
+      kwargs['Marker'] = resp['Marker']
+    except KeyError:
+      break
 
-    return snapshots
+  return snapshots
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Send the response to a signed url endpoint, so CloudFormation can pick up the result.
+# ---------------------------------------------------------------------------------------------------------------------
+def sendResponse(event, context, responseStatus, responseData):
+  responseBody = json.dumps({
+    "Status": responseStatus,
+    "Reason": "See the details in CloudWatch Log Stream: " + context.log_stream_name,
+    "PhysicalResourceId": context.log_stream_name,
+    "StackId": event['StackId'],
+    "RequestId": event['RequestId'],
+    "LogicalResourceId": event['LogicalResourceId'],
+    "Data": responseData
+  })
+
+  print('ResponseURL: {}'.format(event['ResponseURL']))
+  print('ResponseBody: {}'.format(responseBody))
+
+  opener = build_opener(HTTPHandler)
+  request = Request(event['ResponseURL'], data=responseBody)
+  request.add_header('Content-Type', '')
+  request.add_header('Content-Length', len(responseBody))
+  request.get_method = lambda: 'PUT'
+  response = opener.open(request)
+  print("Status code: {}".format(response.getcode()))
+  print("Status message: {}".format(response.msg))
+

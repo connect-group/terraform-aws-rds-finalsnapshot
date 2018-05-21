@@ -73,10 +73,10 @@ def handler(event,context):
   else:
     snapshots = get_all_db_snapshots(identifier, final_snapshot_prefix)
 
-  # Ordered by creation time with newest first
-  snapshots.sort(key=lambda k: k['SnapshotCreateTime'], reverse=True)
-
   if len(snapshots) > 0:
+    # Ordered by creation time with newest first
+    snapshots.sort(key=lambda k: k['SnapshotCreateTime'], reverse=True)
+
     if is_cluster:
       responseData["SnapshotIdentifier"] = snapshots[0]['DBClusterSnapshotIdentifier']
     else:

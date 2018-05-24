@@ -13,6 +13,11 @@ and DB parameter group.
 
 Data sources are used to discover existing VPC resources (VPC, subnet and security group).
 
+The database_endpoint passed to snapshot_maintenance should be based on the list of database instances;
+the idea being that the lambda is not triggered until all database instances are in service.
+For that reason the endpoint is set to `${element(aws_rds_cluster_instance.aurora.*.endpoint, 0)}`
+in order to force a dependency on all of the instances.
+
 Usage
 -----
 To run this example you need to execute:
@@ -30,6 +35,13 @@ $ terraform destroy
 
 Note that this example may create resources which cost money. Run `terraform destroy` when you don't need these 
 resources.
+
+Aurora Cluster Considerations
+-----------------------------
+Restoring an Aurora Cluster from a backup can, on occasion, take hours - 3 or more.
+If you are seeking to reduce costs by destroying infrastructure it might be more advisable to destroy all database
+instance in the cluster, but do not destroy the cluster itself.  This could be achieved by putting the cluster in a
+different Terraform configuration (folder) to the instances; or through careful state manipulation.
 
 Tidying Up
 ----------

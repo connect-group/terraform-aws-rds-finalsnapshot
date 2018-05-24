@@ -60,6 +60,15 @@ def handler(event,context):
     return
 
   # -------------------------------------------------------------------------------------------------------------------
+  # Reboot DB Instance if necessary
+  # -------------------------------------------------------------------------------------------------------------------
+  if is_cluster:
+    reboot_cluster_if_required(identifier)
+  else:
+    reboot_instance_if_required(identifier)
+
+
+  # -------------------------------------------------------------------------------------------------------------------
   # Remove old db final snapshots
   # -------------------------------------------------------------------------------------------------------------------
   if number_of_snapshots_to_retain >= 0:
@@ -165,3 +174,21 @@ def sendResponse(event, context, responseStatus, responseData):
   print("Status code: {}".format(response.getcode()))
   print("Status message: {}".format(response.msg))
 
+def reboot_instance_if_required(identifier):
+  reboot_required = False
+  db_instances = rds.describe_db_instances(DBInstanceIdentifier=identifier)
+  param_groups = db_instances['DBInstances'][0]['DBParameterGroups']
+  for param_group in param_groups:
+    if param_group['ParameterApplyStatus'] == "pending-reboot":
+      reboot_required = True
+
+  if reboot_required:
+    print "Rebooting Instance " + identifier
+    rds.reboot_db_instance(DBInstanceIdentifier=identifier, ForceFailover=False)
+
+def reboot_cluster_if_required(identifier):
+  clusters = rds.describe_db_clusters(DBClusterIdentifier=identifier)
+  members = clusters['DBClusters'][0]['DBClusterMembers']
+  for member in members:
+    instance_id = member['DBInstanceIdentifier']
+    reboot_instance_if_required(instance_id)

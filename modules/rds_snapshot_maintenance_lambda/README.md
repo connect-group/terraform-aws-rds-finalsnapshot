@@ -6,7 +6,8 @@ Terraform Module users are encouraged to use this submodule directly rather than
 This module will create two Lambda functions,
  
 1. Lambda which is used by the rds_snapshot_maintenance module to identify final snaphots, and
-2. Lambda which deletes older final snapshots as per the retention variable.
+2. Lambda which deletes older final snapshots as per the retention variable, and reboots databases instances which are
+   in a pending-reboot state following a restore
 
 If you wish to reduce the number of Lambda functions in your environment, and have multiple databases
 or clusters which need to be destroyed and recreated on a regular basis, then you can create one

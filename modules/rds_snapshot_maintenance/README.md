@@ -1,10 +1,7 @@
 AWS RDS Snapshot Maintenance Module
 ===================================
 
-> ###### IMPORTANT
-> The first time this configuration is applied the `first_run` variable passed to the modules must be `true`.
->
-> All subsequent applies should have `first_run` set to false or ommitted (as false is default).
+> UPDATED to reboot database instance(s) following a snapshot restore if a parameter group requires a pending-reboot.
 
 Terraform Module users are encouraged to use this submodule directly rather than use the root module.
 
@@ -16,6 +13,8 @@ destroying a database: without this submodule, if a final snapshot already exist
 
 The submodule will also delete old final snapshots, while retaining a number specified by the 
 `number_of_snapshots_to_retain` variable.
+
+It will also immediately reboot a database or cluster if it has a parameter group which indicates a reboot pending.
 
 * The optional variable `override_restore_snapshot_identifier` *may* be used to specify
 a known snapshot from which to create the database.  This allows for restoration of the database from another
@@ -30,7 +29,7 @@ This module will also generate a snapshot_identifier if a previous final snapsho
 time the database is created)`, which identifies the previous final snapshot to restore the database from.
 
 This module also removes old final_snapshots upon successful creation of the database or cluster which it
-is maintaining.
+is maintaining.  Lastly, if a database requires a reboot after restoring the snapshot, this is also performed.
 
 Usage
 -----

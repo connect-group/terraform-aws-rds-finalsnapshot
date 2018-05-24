@@ -14,7 +14,7 @@ module "snapshot_maintenance" {
 
   identifier="democluster"
   is_cluster=true
-  database_endpoint="${aws_rds_cluster.aurora.endpoint}"
+  database_endpoint="${element(aws_rds_cluster_instance.aurora.*.endpoint, 0)}"
   number_of_snapshots_to_retain = 0
 }
 
@@ -67,6 +67,7 @@ resource "aws_rds_cluster_instance" "aurora" {
   cluster_identifier = "${aws_rds_cluster.aurora.id}"
   instance_class = "db.t2.small"
   db_subnet_group_name = "${aws_db_subnet_group.aurora.name}"
+  db_parameter_group_name = "${aws_db_parameter_group.dbparameters.name}"
 
   tags = {
     Owner       = "user"
@@ -102,6 +103,18 @@ resource "aws_rds_cluster_parameter_group" "aurora" {
   parameter {
     name  = "lower_case_table_names"
     value = "1"
+    apply_method = "pending-reboot"
+  }
+}
+
+
+resource "aws_db_parameter_group" "dbparameters" {
+  name   = "example-db-cluster-parameter-group"
+  family = "aurora5.6"
+
+  parameter {
+    name  = "autocommit"
+    value = "0"
     apply_method = "pending-reboot"
   }
 }

@@ -41,8 +41,56 @@ resource "aws_db_instance" "database" {
   name                 = "demodb"
   username             = "master"
   password             = "IHaveThePower!"
-  parameter_group_name = "default.mysql5.7"
-  snapshot_identifier = "${module.snapshot_maintenance.snapshot_to_restore}"
+  parameter_group_name = "${aws_db_parameter_group.dbparameters.name}"
+
+  snapshot_identifier  = "${module.snapshot_maintenance.snapshot_to_restore}"
   final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
   backup_retention_period = 0
+}
+
+resource "aws_db_parameter_group" "dbparameters" {
+  name   = "example-db-parameter-group"
+  family = "mysql5.7"
+
+  parameter {
+    name  = "character_set_server"
+    value = "utf8"
+    apply_method = "immediate"
+  }
+
+  parameter {
+    name  = "character_set_database"
+    value = "utf8"
+    apply_method = "immediate"
+  }
+
+  parameter {
+    name = "collation_server"
+    value = "utf8_unicode_ci"
+    apply_method = "immediate"
+  }
+
+  parameter {
+    name = "collation_connection"
+    value = "utf8_unicode_ci"
+    apply_method = "immediate"
+  }
+
+  parameter {
+    name         = "lower_case_table_names"
+    value        = "1"
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name = "wait_timeout"
+    value = 300
+    apply_method = "immediate"
+  }
+
+  parameter {
+    name = "event_scheduler"
+    value = "ON"
+    apply_method = "immediate"
+  }
 }

@@ -1,6 +1,8 @@
 AWS RDS Final Snapshot Management Module
 ========================================
 
+> UPDATED to reboot database instance(s) following a snapshot restore if a parameter group requires a pending-reboot.
+
 This module, or specifically the submodule `rds_snapshot_maintenance` will manage 
 Final Snapshots of AWS database instances and clusters to ensure that infrastructure can be backed up, destroyed, 
 and restored.
@@ -40,9 +42,8 @@ The Root module calls these submodules which can (and should) be used to create 
 * [rds_snapshot_maintenance_lambda](https://github.com/connect-group/terraform-aws-rds-finalsnapshot/tree/master/modules/rds_snapshot_maintenance_lambda) - helper lambda 
 
 > ###### IMPORTANT
-> When using the child modules directly, both of them must be used, even if you do not want to delete old snapshots.  
-> The second module handles some state information which must be implemented after the database instance or cluster 
-> is created.
+> When using the child modules directly, simply use the rds_snapshot_maintenance module and pass in the database
+> identifier.
 
 Usage With 'Built-In' Simple MySQL Instance
 -------------------------------------------
@@ -111,6 +112,11 @@ module "db" {
 
 Usage With Aurora Cluster
 -------------------------
+The database_endpoint passed to snapshot_maintenance should be based on the list of database instances;
+the idea being that the lambda is not triggered until all database instances are in service.
+For that reason the endpoint is set to `${element(aws_rds_cluster_instance.aurora.*.endpoint, 0)}`
+in order to force a dependency on all of the instances.
+
 ```hcl
 module "snapshot_maintenance" {
   source="connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
@@ -118,7 +124,7 @@ module "snapshot_maintenance" {
   identifier="democluster"
 
   is_cluster=true
-  database_endpoint="${module.db.this_db_instance_endpoint}"
+  database_endpoint="${element(aws_rds_cluster_instance.aurora.*.endpoint, 0)}"
   number_of_snapshots_to_retain = 1
 }
 
@@ -137,6 +143,13 @@ resource "aws_rds_cluster" "aurora" {
   master_password    = "AnInsanelyDifficultToGuessPasswordWhichShouldBeChanged"
 }
 ```
+
+Aurora Cluster Considerations
+-----------------------------
+Restoring an Aurora Cluster from a backup can, on occasion, take hours - 3 or more.
+If you are seeking to reduce costs by destroying infrastructure it might be more advisable to destroy all database
+instance in the cluster, but do not destroy the cluster itself.  This could be achieved by putting the cluster in a
+different Terraform configuration (folder) to the instances; or through careful state manipulation.
 
 Advanced Usage - Shared Lambda
 ------------------------------

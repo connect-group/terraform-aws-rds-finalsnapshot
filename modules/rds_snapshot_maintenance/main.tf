@@ -38,6 +38,8 @@ locals {
 #   * Log to Cloudwatch logs
 #   * Describe Snapshots for a DBInstance/Cluster
 #   * Delete DBInstance/Cluster snapshots
+#   * Describe the DBInstance/Cluster (find out if it needs a reboot)
+#   * Reboot
 # ---------------------------------------------------------------------------------------------------------------------
 locals {
   # Interpolate with the IAM Policy to create a policy specific to either DB Instance or DB Cluster snapshots.
@@ -66,6 +68,54 @@ resource "aws_iam_policy" "maintain-rds-final-snapshots-policy" {
             "Effect": "Allow",
             "Action": [ "rds:DeleteDB${local.cluster}Snapshot" ],
             "Resource": "arn:aws:rds:*:*:${var.is_cluster ? "cluster-snapshot" : "snapshot"}:${format("%s-final-snapshot-", var.identifier)}*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [ "rds:DescribeDBInstances" ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "reboot-rds-policy" {
+  count = "${var.is_cluster ? 0 : 1}"
+  name = "manage_reboot_${var.identifier}_policy"
+  path = "/"
+  description = "MANAGED BY TERRAFORM Allow Lambda to reboot db instance"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [ "rds:RebootDBInstance" ],
+            "Resource": "${format("arn:aws:rds:*:*:db:%s", var.identifier)}"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "reboot-cluster-policy" {
+  count = "${var.is_cluster ? 1 : 0}"
+  name = "manage_reboot_${var.identifier}_policy"
+  path = "/"
+  description = "MANAGED BY TERRAFORM Allow Lambda to reboot db instance"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [ "rds:DescribeDBClusters" ],
+            "Resource": "${format("arn:aws:rds:*:*:cluster:%s", var.identifier)}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [ "rds:RebootDBInstance" ],
+            "Resource": "arn:aws:rds:*:*:db:*"
         }
     ]
 }
@@ -75,6 +125,11 @@ EOF
 resource "aws_iam_role_policy_attachment" "attach-policy" {
   role = "${local.function_role}"
   policy_arn = "${aws_iam_policy.maintain-rds-final-snapshots-policy.arn}"
+}
+
+resource "aws_iam_role_policy_attachment" "attach-reboot-policy" {
+  role = "${local.function_role}"
+  policy_arn = "${element(concat(aws_iam_policy.reboot-rds-policy.*.arn, aws_iam_policy.reboot-cluster-policy.*.arn), 0)}"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

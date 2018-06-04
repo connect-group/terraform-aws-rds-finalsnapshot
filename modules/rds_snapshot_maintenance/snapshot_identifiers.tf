@@ -85,8 +85,9 @@ module "find_final_snapshot" {
 # ---------------------------------------------------------------------------------------------------------------------
 locals {
   # Defined as a local because we use it twice in the snapshot_constants block below.
-  previous_final_snapshot = "${lookup(module.find_final_snapshot.result, "SnapshotIdentifier", "")}"
-  snapshot_to_restore     = "${length(var.override_restore_snapshot_identifier) > 0 ? var.override_restore_snapshot_identifier : local.previous_final_snapshot}"
-  first_run               = "${length(local.previous_final_snapshot) == 0}"
-  final_snapshot_identifier="${format("%s-final-snapshot-%05d", var.identifier, local.first_run? 1 : substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1)+1)}"
+  previous_final_snapshot   = "${lookup(module.find_final_snapshot.result, "SnapshotIdentifier", "")}"
+  snapshot_to_restore       = "${length(var.override_restore_snapshot_identifier) > 0 ? var.override_restore_snapshot_identifier : local.previous_final_snapshot}"
+  first_run                 = "${length(local.previous_final_snapshot) == 0}"
+  counter                   = "${local.first_run? 1 : replace(substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1), "/^0+(\\d+)/", "$1")+1}"
+  final_snapshot_identifier = "${format("%s-final-snapshot-%05d", var.identifier, local.counter)}"
 }

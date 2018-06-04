@@ -88,6 +88,6 @@ locals {
   previous_final_snapshot   = "${lookup(module.find_final_snapshot.result, "SnapshotIdentifier", "")}"
   snapshot_to_restore       = "${length(var.override_restore_snapshot_identifier) > 0 ? var.override_restore_snapshot_identifier : local.previous_final_snapshot}"
   first_run                 = "${length(local.previous_final_snapshot) == 0}"
-  counter                   = "${local.first_run? 1 : replace(substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1), "/^0+(\\d+)/", "$1")+1}"
-  final_snapshot_identifier = "${format("%s-final-snapshot-%05d", var.identifier, local.counter)}"
+  counter                   = "${format("%05d", local.first_run? 1 : replace(substr(format("%s%s","00000",local.previous_final_snapshot),-5,-1), "/^0+(\\d+)/", "$1")+1)}"
+  final_snapshot_identifier = "${format("%s-final-snapshot-%s", var.identifier, local.counter)}"
 }

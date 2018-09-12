@@ -193,6 +193,33 @@ resource "aws_db_instance" "database" {
 }
 ```
 
+KMS Keys
+--------
+If using KMS Keys, do not destroy them - else you will not be able to restore the backup.
+Try keeping them in a separate Terraform configuration project (folder).
+
+You may want to prevent destruction with a lifecycle statement, e.g.
+
+```hcl
+resource "aws_kms_key" "this" {
+ description             = "database storage encryption key"
+ deletion_window_in_days = "30"
+ enable_key_rotation     = true
+
+ lifecycle {
+   prevent_destroy = true
+ }
+}
+```
+
+Note that it is very difficult to manually change the KMS Key.  This is because
+changing the key,
+1. destroys the database; 
+2. snapshots it with the original key;
+3. creates a new database with the new key; 
+4. Restores the snapshot and the old key
+
+For more information see https://aws.amazon.com/premiumsupport/knowledge-center/update-encryption-key-rds/
 
 Examples
 --------

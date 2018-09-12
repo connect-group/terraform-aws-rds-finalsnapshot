@@ -83,6 +83,7 @@ resource "aws_lambda_function" "find-final-snapshot" {
   handler = "find_final_snapshot.handler"
   source_code_hash = "${data.archive_file.find-final-snapshot-zip.0.output_base64sha256}"
   runtime = "python2.7"
+  timeout = 300
   description = "MANAGED BY TERRAFORM"
 }
 

@@ -1,6 +1,7 @@
 import boto3
 import json
 import httplib
+import time
 from urllib2 import build_opener, HTTPHandler, Request
 from botocore.exceptions import ClientError
 
@@ -68,15 +69,9 @@ def handler(event,context):
   #
   # Obtain a list of snapshots; each snapshot identifier will begin with 'final_snapshot_prefix'
   #
-  if is_cluster:
-    snapshots = get_all_db_cluster_snapshots(identifier, final_snapshot_prefix)
-  else:
-    snapshots = get_all_db_snapshots(identifier, final_snapshot_prefix)
+  snapshots = waitForSnapshots(is_cluster, identifier, final_snapshot_prefix)
 
   if len(snapshots) > 0:
-    # Ordered by creation time with newest first
-    snapshots.sort(key=lambda k: k['SnapshotCreateTime'], reverse=True)
-
     if is_cluster:
       responseData["SnapshotIdentifier"] = snapshots[0]['DBClusterSnapshotIdentifier']
     else:
@@ -89,6 +84,32 @@ def handler(event,context):
   sendResponse(event, context, responseStatus, responseData)
 
   return "OK"
+
+# If the lambda is run while a snapshot is in progress then
+# We wait for the snapshot to complete before returning.
+def waitForSnapshots(is_cluster, identifier, final_snapshot_prefix):
+  retry = True
+  counter = 8
+  while retry and counter > 0:
+    retry = False
+    if is_cluster:
+      snapshots = get_all_db_cluster_snapshots(identifier, final_snapshot_prefix)
+    else:
+      snapshots = get_all_db_snapshots(identifier, final_snapshot_prefix)
+
+    if len(snapshots) > 0:
+      # Ordered by creation time with newest first
+      try:
+        snapshots.sort(key=lambda k: k['SnapshotCreateTime'], reverse=True)
+      except KeyError:
+        # A KeyError will occur if a snapshot may be in the process of being created, 
+        # as the SnapshotCreateTime will not exist.
+        # In that case, sleep for a minute and try again.
+        retry = True
+        counter -= 1
+        time.sleep(30)
+
+  return snapshots
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Get a list of DB Cluster Snapshots applicable to the Cluster identifier, and whose snapshot identifier

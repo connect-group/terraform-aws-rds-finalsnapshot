@@ -46,12 +46,19 @@ resource "aws_db_instance" "database" {
   final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
   backup_retention_period = 0
 
-  kms_key_id                = "${aws_kms_key.this.arn}"
+  kms_key_id                = "${aws_kms_key.a.arn}"
   storage_encrypted         = true
 }
 
-resource "aws_kms_key" "this" {
+resource "aws_kms_key" "a" {
  description             = "database storage encryption key"
  deletion_window_in_days = "10"
+ enable_key_rotation     = true
+}
+
+resource "aws_kms_key" "b" {
+ description             = "database storage encryption key"
+ deletion_window_in_days = "10"
+ enable_key_rotation     = true
 }
 

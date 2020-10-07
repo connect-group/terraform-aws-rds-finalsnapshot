@@ -27,13 +27,13 @@ module "snapshot_maintenance" {
 
   identifier                           = "demodbinstance"
   is_cluster                           = false
-  database_endpoint                    = "${aws_db_instance.database.endpoint}"
+  database_endpoint                    = aws_db_instance.database.endpoint
   number_of_snapshots_to_retain        = 1
-  override_restore_snapshot_identifier = "${var.restore_snapshot}"
+  override_restore_snapshot_identifier = var.restore_snapshot
 }
 
 resource "aws_db_instance" "database" {
-  identifier           = "${module.snapshot_maintenance.identifier}"
+  identifier           = module.snapshot_maintenance.identifier
   allocated_storage    = 5
   storage_type         = "gp2"
   engine               = "mysql"
@@ -42,10 +42,10 @@ resource "aws_db_instance" "database" {
   name                 = "demodb"
   username             = "master"
   password             = "IHaveThePower!"
-  parameter_group_name = "${aws_db_parameter_group.dbparameters.name}"
+  parameter_group_name = aws_db_parameter_group.dbparameters.name
 
-  snapshot_identifier       = "${module.snapshot_maintenance.snapshot_to_restore}"
-  final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
+  snapshot_identifier       = module.snapshot_maintenance.snapshot_to_restore
+  final_snapshot_identifier = module.snapshot_maintenance.final_snapshot_identifier
   backup_retention_period   = 0
 }
 
@@ -95,3 +95,4 @@ resource "aws_db_parameter_group" "dbparameters" {
     apply_method = "immediate"
   }
 }
+

@@ -18,14 +18,14 @@ module "snapshot_maintenance_1" {
   shared_lambda_function_name   = "global_shared_rds_snapshot_maintenance"
   identifier                    = "demodbinstance1"
   is_cluster                    = false
-  database_endpoint             = "${aws_db_instance.database1.endpoint}"
+  database_endpoint             = aws_db_instance.database1.endpoint
   number_of_snapshots_to_retain = 1
 }
 
 resource "aws_db_instance" "database1" {
-  identifier                = "${module.snapshot_maintenance_1.identifier}"
+  identifier                = module.snapshot_maintenance_1.identifier
   allocated_storage         = 5
-  backup_retention_period   = 0                                                            # no daily backups
+  backup_retention_period   = 0 # no daily backups
   storage_type              = "gp2"
   engine                    = "mysql"
   engine_version            = "5.7"
@@ -34,8 +34,8 @@ resource "aws_db_instance" "database1" {
   username                  = "master1"
   password                  = "PasswordForDatabase1!"
   parameter_group_name      = "default.mysql5.7"
-  snapshot_identifier       = "${module.snapshot_maintenance_1.snapshot_to_restore}"
-  final_snapshot_identifier = "${module.snapshot_maintenance_1.final_snapshot_identifier}"
+  snapshot_identifier       = module.snapshot_maintenance_1.snapshot_to_restore
+  final_snapshot_identifier = module.snapshot_maintenance_1.final_snapshot_identifier
 }
 
 module "snapshot_maintenance_2" {
@@ -44,14 +44,14 @@ module "snapshot_maintenance_2" {
   shared_lambda_function_name   = "global_shared_rds_snapshot_maintenance"
   identifier                    = "demodbinstance2"
   is_cluster                    = false
-  database_endpoint             = "${aws_db_instance.database2.endpoint}"
+  database_endpoint             = aws_db_instance.database2.endpoint
   number_of_snapshots_to_retain = 1
 }
 
 resource "aws_db_instance" "database2" {
-  identifier                = "${module.snapshot_maintenance_2.identifier}"
+  identifier                = module.snapshot_maintenance_2.identifier
   allocated_storage         = 5
-  backup_retention_period   = 0                                                            # no daily backups
+  backup_retention_period   = 0 # no daily backups
   storage_type              = "gp2"
   engine                    = "mysql"
   engine_version            = "5.7"
@@ -60,6 +60,7 @@ resource "aws_db_instance" "database2" {
   username                  = "master2"
   password                  = "PasswordForDatabase2!"
   parameter_group_name      = "default.mysql5.7"
-  snapshot_identifier       = "${module.snapshot_maintenance_2.snapshot_to_restore}"
-  final_snapshot_identifier = "${module.snapshot_maintenance_2.final_snapshot_identifier}"
+  snapshot_identifier       = module.snapshot_maintenance_2.snapshot_to_restore
+  final_snapshot_identifier = module.snapshot_maintenance_2.final_snapshot_identifier
 }
+

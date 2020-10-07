@@ -3,12 +3,12 @@
 # ---------------------------------------------------------------------------------------------------------------------
 output "snapshot_to_restore" {
   description = "String. Name of the snapshot which a database instance/cluster should restore on creation."
-  value       = "${local.snapshot_to_restore}"
+  value       = local.snapshot_to_restore
 }
 
 output "final_snapshot_identifier" {
   description = "String. Name of the snapshot which a database instance/cluster should create when destroyed."
-  value       = "${local.final_snapshot_identifier}"
+  value       = local.final_snapshot_identifier
 }
 
 //    snapshot_to_restore = "${local.snapshot_to_restore}"
@@ -20,5 +20,6 @@ output "final_snapshot_identifier" {
 # ---------------------------------------------------------------------------------------------------------------------
 output "identifier" {
   description = "String. Unique Database Instance or Cluster identifier."
-  value       = "${var.identifier}"
+  value       = var.identifier
 }
+

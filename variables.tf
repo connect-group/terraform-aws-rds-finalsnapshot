@@ -46,3 +46,4 @@ variable "instance_class" {
   default     = "db.t2.micro"
   description = "(Optional) The instance type of the RDS instance. Defaults to 'db.t2.micro'"
 }
+

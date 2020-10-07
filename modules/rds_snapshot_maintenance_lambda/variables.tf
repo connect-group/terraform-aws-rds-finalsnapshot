@@ -3,6 +3,7 @@ variable "include_this_module" {
 }
 
 variable "function_name" {
-  type        = "string"
+  type        = string
   description = "(Required) Name of the lambda function."
 }
+

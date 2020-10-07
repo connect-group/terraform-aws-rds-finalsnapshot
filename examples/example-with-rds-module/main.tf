@@ -17,7 +17,7 @@ module "snapshot_maintenance" {
 
   is_cluster                    = false
   identifier                    = "demodb"
-  database_endpoint             = "${module.db.this_db_instance_endpoint}"
+  database_endpoint             = module.db.this_db_instance_endpoint
   number_of_snapshots_to_retain = 0
 }
 
@@ -29,11 +29,11 @@ data "aws_vpc" "default" {
 }
 
 data "aws_subnet_ids" "all" {
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
 }
 
 data "aws_security_group" "default" {
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
   name   = "default"
 }
 
@@ -44,7 +44,7 @@ module "db" {
   source  = "terraform-aws-modules/rds/aws"
   version = "1.15.0"
 
-  identifier = "${module.snapshot_maintenance.identifier}"
+  identifier = module.snapshot_maintenance.identifier
 
   # All available versions: http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html#MySQL.Concepts.VersionMgmt
   engine            = "mysql"
@@ -59,7 +59,7 @@ module "db" {
   password = "YourPwdShouldBeLongAndSecure!"
   port     = "3306"
 
-  vpc_security_group_ids = ["${data.aws_security_group.default.id}"]
+  vpc_security_group_ids = [data.aws_security_group.default.id]
 
   maintenance_window = "Mon:00:00-Mon:03:00"
   backup_window      = "03:00-06:00"
@@ -73,16 +73,17 @@ module "db" {
   }
 
   # DB subnet group
-  subnet_ids = ["${data.aws_subnet_ids.all.ids}"]
+  subnet_ids = [data.aws_subnet_ids.all.ids]
 
   # DB parameter group
   family = "mysql5.7"
 
   # Snapshot name to restore upon DB creation
-  snapshot_identifier = "${module.snapshot_maintenance.snapshot_to_restore}"
+  snapshot_identifier = module.snapshot_maintenance.snapshot_to_restore
 
   # Snapshot name upon DB deletion
-  final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
+  final_snapshot_identifier = module.snapshot_maintenance.final_snapshot_identifier
 
   skip_final_snapshot = "false"
 }
+

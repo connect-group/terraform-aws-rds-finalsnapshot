@@ -27,13 +27,13 @@ module "snapshot_maintenance" {
 
   identifier                           = "demomssqlinstance"
   is_cluster                           = false
-  database_endpoint                    = "${aws_db_instance.database.endpoint}"
+  database_endpoint                    = aws_db_instance.database.endpoint
   number_of_snapshots_to_retain        = 1
-  override_restore_snapshot_identifier = "${var.restore_snapshot}"
+  override_restore_snapshot_identifier = var.restore_snapshot
 }
 
 resource "aws_db_instance" "database" {
-  identifier        = "${module.snapshot_maintenance.identifier}"
+  identifier        = module.snapshot_maintenance.identifier
   allocated_storage = 20
   storage_type      = "gp2"
   engine            = "sqlserver-web"
@@ -43,11 +43,11 @@ resource "aws_db_instance" "database" {
   username = "master"
   password = "IHaveThePower!"
 
-  snapshot_identifier       = "${module.snapshot_maintenance.snapshot_to_restore}"
-  final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
+  snapshot_identifier       = module.snapshot_maintenance.snapshot_to_restore
+  final_snapshot_identifier = module.snapshot_maintenance.final_snapshot_identifier
   backup_retention_period   = 0
 
-  kms_key_id        = "${aws_kms_key.this.arn}"
+  kms_key_id        = aws_kms_key.this.arn
   storage_encrypted = true
 }
 
@@ -55,3 +55,4 @@ resource "aws_kms_key" "this" {
   description             = "database storage encryption key"
   deletion_window_in_days = "10"
 }
+

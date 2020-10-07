@@ -14,7 +14,7 @@ module "snapshot_maintenance" {
 
   identifier                    = "democluster"
   is_cluster                    = true
-  database_endpoint             = "${element(aws_rds_cluster_instance.aurora.*.endpoint, 0)}"
+  database_endpoint             = element(aws_rds_cluster_instance.aurora.*.endpoint, 0)
   number_of_snapshots_to_retain = 0
 }
 
@@ -26,11 +26,11 @@ data "aws_vpc" "default" {
 }
 
 data "aws_subnet_ids" "all" {
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
 }
 
 data "aws_security_group" "default" {
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
   name   = "default"
 }
 
@@ -38,7 +38,7 @@ data "aws_security_group" "default" {
 # Aurora Cluster
 ##############################################################
 resource "aws_rds_cluster" "aurora" {
-  cluster_identifier = "${module.snapshot_maintenance.identifier}"
+  cluster_identifier = module.snapshot_maintenance.identifier
 
   database_name   = "demodb"
   master_username = "user"
@@ -48,26 +48,26 @@ resource "aws_rds_cluster" "aurora" {
   backup_retention_period = 1
 
   # Snapshot name to restore upon DB creation
-  snapshot_identifier = "${module.snapshot_maintenance.snapshot_to_restore}"
+  snapshot_identifier = module.snapshot_maintenance.snapshot_to_restore
 
   # Snapshot name upon DB deletion
-  final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
+  final_snapshot_identifier = module.snapshot_maintenance.final_snapshot_identifier
 
-  db_subnet_group_name            = "${aws_db_subnet_group.aurora.name}"
-  db_cluster_parameter_group_name = "${aws_rds_cluster_parameter_group.aurora.name}"
+  db_subnet_group_name            = aws_db_subnet_group.aurora.name
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora.name
 
   vpc_security_group_ids = [
-    "${data.aws_security_group.default.id}",
+    data.aws_security_group.default.id,
   ]
 }
 
 resource "aws_rds_cluster_instance" "aurora" {
   count                   = "2"
   identifier              = "demodb-${count.index}"
-  cluster_identifier      = "${aws_rds_cluster.aurora.id}"
+  cluster_identifier      = aws_rds_cluster.aurora.id
   instance_class          = "db.t2.small"
-  db_subnet_group_name    = "${aws_db_subnet_group.aurora.name}"
-  db_parameter_group_name = "${aws_db_parameter_group.dbparameters.name}"
+  db_subnet_group_name    = aws_db_subnet_group.aurora.name
+  db_parameter_group_name = aws_db_parameter_group.dbparameters.name
 
   tags = {
     Owner       = "user"
@@ -78,7 +78,7 @@ resource "aws_rds_cluster_instance" "aurora" {
 resource "aws_db_subnet_group" "aurora" {
   name = "demodb_subnet_group"
 
-  subnet_ids = ["${data.aws_subnet_ids.all.ids}"]
+  subnet_ids = data.aws_subnet_ids.all.ids
 
   tags = {
     Owner       = "user"
@@ -117,3 +117,4 @@ resource "aws_db_parameter_group" "dbparameters" {
     apply_method = "pending-reboot"
   }
 }
+

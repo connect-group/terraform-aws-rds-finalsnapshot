@@ -6,11 +6,11 @@ variable "identifier" {
 }
 
 variable "is_cluster" {
-  description="(Required) Boolean. `true` if the database for which snapshots are being managed, is a cluster (AWS Aurora). Otherwise set to `false`."
+  description = "(Required) Boolean. `true` if the database for which snapshots are being managed, is a cluster (AWS Aurora). Otherwise set to `false`."
 }
 
 variable "database_endpoint" {
-  description="(Required) This is required to ensure the lambda is triggered AFTER the database/cluster is created."
+  description = "(Required) This is required to ensure the lambda is triggered AFTER the database/cluster is created."
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -18,16 +18,16 @@ variable "database_endpoint" {
 # For which sensible defaults have been set.
 # ---------------------------------------------------------------------------------------------------------------------
 variable "override_restore_snapshot_identifier" {
-  default=""
-  description="(Optional) Use with care.  If present, the database will be restored from this snapshot instead of the last final snapshot.  If you have number_of_snapshot_to_retain=0, the final snapshot will be deleted forever!  This should usually be blank but could be overriddent from the command line to restore a database from another environment or previous (not most recent) final snapshot."
+  default     = ""
+  description = "(Optional) Use with care.  If present, the database will be restored from this snapshot instead of the last final snapshot.  If you have number_of_snapshot_to_retain=0, the final snapshot will be deleted forever!  This should usually be blank but could be overriddent from the command line to restore a database from another environment or previous (not most recent) final snapshot."
 }
 
 variable "number_of_snapshots_to_retain" {
-  default=1
+  default     = 1
   description = "(Optional) Number of final snapshots to retain after restoration.  Minimum 0.  Can be set to the string 'ALL' in which case snapshots are never deleted.  Default: 1"
 }
 
 variable "shared_lambda_function_name" {
-  default=""
+  default     = ""
   description = "(Optional) If specified, will look for and use a shared lambda, instead of creating one lambda per managed database/cluster."
 }

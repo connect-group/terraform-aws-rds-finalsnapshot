@@ -23,16 +23,17 @@ module "snapshot_maintenance" {
   # Or the public registry,
   #   source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
   #   version="1.0.0"
-  source="../../modules/rds_snapshot_maintenance"
-  identifier="demodbinstance"
-  is_cluster=false
-  database_endpoint="${aws_db_instance.database.endpoint}"
-  number_of_snapshots_to_retain=1
+  source = "../../modules/rds_snapshot_maintenance"
+
+  identifier                           = "demodbinstance"
+  is_cluster                           = false
+  database_endpoint                    = "${aws_db_instance.database.endpoint}"
+  number_of_snapshots_to_retain        = 1
   override_restore_snapshot_identifier = "${var.restore_snapshot}"
 }
 
 resource "aws_db_instance" "database" {
-  identifier = "${module.snapshot_maintenance.identifier}"
+  identifier           = "${module.snapshot_maintenance.identifier}"
   allocated_storage    = 5
   storage_type         = "gp2"
   engine               = "mysql"
@@ -43,9 +44,9 @@ resource "aws_db_instance" "database" {
   password             = "IHaveThePower!"
   parameter_group_name = "${aws_db_parameter_group.dbparameters.name}"
 
-  snapshot_identifier  = "${module.snapshot_maintenance.snapshot_to_restore}"
+  snapshot_identifier       = "${module.snapshot_maintenance.snapshot_to_restore}"
   final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
-  backup_retention_period = 0
+  backup_retention_period   = 0
 }
 
 resource "aws_db_parameter_group" "dbparameters" {
@@ -53,26 +54,26 @@ resource "aws_db_parameter_group" "dbparameters" {
   family = "mysql5.7"
 
   parameter {
-    name  = "character_set_server"
-    value = "utf8"
+    name         = "character_set_server"
+    value        = "utf8"
     apply_method = "immediate"
   }
 
   parameter {
-    name  = "character_set_database"
-    value = "utf8"
+    name         = "character_set_database"
+    value        = "utf8"
     apply_method = "immediate"
   }
 
   parameter {
-    name = "collation_server"
-    value = "utf8_unicode_ci"
+    name         = "collation_server"
+    value        = "utf8_unicode_ci"
     apply_method = "immediate"
   }
 
   parameter {
-    name = "collation_connection"
-    value = "utf8_unicode_ci"
+    name         = "collation_connection"
+    value        = "utf8_unicode_ci"
     apply_method = "immediate"
   }
 
@@ -83,14 +84,14 @@ resource "aws_db_parameter_group" "dbparameters" {
   }
 
   parameter {
-    name = "wait_timeout"
-    value = 300
+    name         = "wait_timeout"
+    value        = 300
     apply_method = "immediate"
   }
 
   parameter {
-    name = "event_scheduler"
-    value = "ON"
+    name         = "event_scheduler"
+    value        = "ON"
     apply_method = "immediate"
   }
 }

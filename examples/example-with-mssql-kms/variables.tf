@@ -1,4 +1,4 @@
 variable "restore_snapshot" {
-  default=""
+  default     = ""
   description = "Override the snapshot which is restored."
 }

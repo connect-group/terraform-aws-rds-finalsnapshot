@@ -23,35 +23,35 @@ module "snapshot_maintenance" {
   # Or the public registry,
   #   source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
   #   version="1.0.0"
-  source="../../modules/rds_snapshot_maintenance"
-  identifier="demomssqlinstance"
-  is_cluster=false
-  database_endpoint="${aws_db_instance.database.endpoint}"
-  number_of_snapshots_to_retain=1
+  source = "../../modules/rds_snapshot_maintenance"
+
+  identifier                           = "demomssqlinstance"
+  is_cluster                           = false
+  database_endpoint                    = "${aws_db_instance.database.endpoint}"
+  number_of_snapshots_to_retain        = 1
   override_restore_snapshot_identifier = "${var.restore_snapshot}"
 }
 
 resource "aws_db_instance" "database" {
-  identifier = "${module.snapshot_maintenance.identifier}"
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  engine               = "sqlserver-web"
-  engine_version       = "14.00.3015.40.v1"
-  instance_class       = "db.t2.medium"
+  identifier        = "${module.snapshot_maintenance.identifier}"
+  allocated_storage = 20
+  storage_type      = "gp2"
+  engine            = "sqlserver-web"
+  engine_version    = "14.00.3015.40.v1"
+  instance_class    = "db.t2.medium"
 
-  username             = "master"
-  password             = "IHaveThePower!"
+  username = "master"
+  password = "IHaveThePower!"
 
-  snapshot_identifier  = "${module.snapshot_maintenance.snapshot_to_restore}"
+  snapshot_identifier       = "${module.snapshot_maintenance.snapshot_to_restore}"
   final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
-  backup_retention_period = 0
+  backup_retention_period   = 0
 
-  kms_key_id                = "${aws_kms_key.this.arn}"
-  storage_encrypted         = true
+  kms_key_id        = "${aws_kms_key.this.arn}"
+  storage_encrypted = true
 }
 
 resource "aws_kms_key" "this" {
- description             = "database storage encryption key"
- deletion_window_in_days = "10"
+  description             = "database storage encryption key"
+  deletion_window_in_days = "10"
 }
-

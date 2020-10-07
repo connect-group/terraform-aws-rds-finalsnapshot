@@ -7,6 +7,6 @@ provider "aws" {
 }
 
 module "global_lambda" {
-  source = "../../../modules/rds_snapshot_maintenance_lambda"
+  source        = "../../../modules/rds_snapshot_maintenance_lambda"
   function_name = "global_shared_rds_snapshot_maintenance"
 }

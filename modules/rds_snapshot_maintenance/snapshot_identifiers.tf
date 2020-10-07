@@ -4,7 +4,6 @@
 # the name of the next final_snapshot.  The final snapshot name is based on the identifier and a counter
 # ---------------------------------------------------------------------------------------------------------------------
 
-
 # This module requires >=0.10.4 because it uses 'Local Values' bug fixed in 0.10.4
 # But since the snapshot_maintenance module uses timeadd (added in 0.11.2), may as well keep the two
 # modules in sync.
@@ -16,8 +15,8 @@ terraform {
 # Use a global, or module specific lambda, depending on 'shared_lambda_function_name'
 # ---------------------------------------------------------------------------------------------------------------------
 data "aws_lambda_function" "find_snapshot" {
-  count="${length(var.shared_lambda_function_name)>0 ? 1 : 0}"
-  function_name="${var.shared_lambda_function_name}Q"
+  count         = "${length(var.shared_lambda_function_name)>0 ? 1 : 0}"
+  function_name = "${var.shared_lambda_function_name}Q"
 }
 
 locals {
@@ -30,9 +29,10 @@ locals {
 # Attach Policy to Lambda, allow find_snapshot to read snapshots belonging to the instance.
 # ---------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_policy" "find_final_snapshot-policy" {
-  name = "find_finalsnapshot_${var.identifier}_policy"
-  path = "/"
+  name        = "find_finalsnapshot_${var.identifier}_policy"
+  path        = "/"
   description = "MANAGED BY TERRAFORM Allow Lambda to find db snapshots"
+
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -53,7 +53,7 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "attach-policy-to-find-final-snapshot-lambda" {
-  role = "${local.query_function_role}"
+  role       = "${local.query_function_role}"
   policy_arn = "${aws_iam_policy.find_final_snapshot-policy.arn}"
 }
 
@@ -61,7 +61,7 @@ resource "aws_iam_role_policy_attachment" "attach-policy-to-find-final-snapshot-
 # Execute Lambda, after attaching the policy.
 # ---------------------------------------------------------------------------------------------------------------------
 module "find_final_snapshot" {
-  source="connect-group/lambda-exec/aws"
+  source              = "connect-group/lambda-exec/aws"
   name                = "find-snapshot-for-${var.identifier}"
   lambda_function_arn = "${local.query_function_arn}"
 
@@ -71,6 +71,7 @@ module "find_final_snapshot" {
     is_cluster            = "${var.is_cluster}"
     final_snapshot_prefix = "${format("%s-final-snapshot-", var.identifier)}"
     default_value         = ""
+
     //run_on_every_apply = "${timestamp()}"
   }
 

@@ -10,11 +10,11 @@ provider "aws" {
 # terraform-aws-rds-finalsnapshot Modules
 ##############################################################
 module "snapshot_maintenance" {
-  source="../../modules/rds_snapshot_maintenance"
+  source = "../../modules/rds_snapshot_maintenance"
 
-  identifier="democluster"
-  is_cluster=true
-  database_endpoint="${element(aws_rds_cluster_instance.aurora.*.endpoint, 0)}"
+  identifier                    = "democluster"
+  is_cluster                    = true
+  database_endpoint             = "${element(aws_rds_cluster_instance.aurora.*.endpoint, 0)}"
   number_of_snapshots_to_retain = 0
 }
 
@@ -38,11 +38,11 @@ data "aws_security_group" "default" {
 # Aurora Cluster
 ##############################################################
 resource "aws_rds_cluster" "aurora" {
-  cluster_identifier      = "${module.snapshot_maintenance.identifier}"
+  cluster_identifier = "${module.snapshot_maintenance.identifier}"
 
-  database_name           = "demodb"
-  master_username         = "user"
-  master_password         = "YourPwdShouldBeLongAndSecure!"
+  database_name   = "demodb"
+  master_username = "user"
+  master_password = "YourPwdShouldBeLongAndSecure!"
 
   # Aurora has a minimum of 1
   backup_retention_period = 1
@@ -53,20 +53,20 @@ resource "aws_rds_cluster" "aurora" {
   # Snapshot name upon DB deletion
   final_snapshot_identifier = "${module.snapshot_maintenance.final_snapshot_identifier}"
 
-  db_subnet_group_name = "${aws_db_subnet_group.aurora.name}"
+  db_subnet_group_name            = "${aws_db_subnet_group.aurora.name}"
   db_cluster_parameter_group_name = "${aws_rds_cluster_parameter_group.aurora.name}"
 
   vpc_security_group_ids = [
-    "${data.aws_security_group.default.id}"
+    "${data.aws_security_group.default.id}",
   ]
 }
 
 resource "aws_rds_cluster_instance" "aurora" {
-  count="2"
-  identifier = "demodb-${count.index}"
-  cluster_identifier = "${aws_rds_cluster.aurora.id}"
-  instance_class = "db.t2.small"
-  db_subnet_group_name = "${aws_db_subnet_group.aurora.name}"
+  count                   = "2"
+  identifier              = "demodb-${count.index}"
+  cluster_identifier      = "${aws_rds_cluster.aurora.id}"
+  instance_class          = "db.t2.small"
+  db_subnet_group_name    = "${aws_db_subnet_group.aurora.name}"
   db_parameter_group_name = "${aws_db_parameter_group.dbparameters.name}"
 
   tags = {
@@ -87,7 +87,7 @@ resource "aws_db_subnet_group" "aurora" {
 }
 
 resource "aws_rds_cluster_parameter_group" "aurora" {
-  name = "demodb-db-parameter-group"
+  name   = "demodb-db-parameter-group"
   family = "aurora5.6"
 
   parameter {
@@ -101,20 +101,19 @@ resource "aws_rds_cluster_parameter_group" "aurora" {
   }
 
   parameter {
-    name  = "lower_case_table_names"
-    value = "1"
+    name         = "lower_case_table_names"
+    value        = "1"
     apply_method = "pending-reboot"
   }
 }
-
 
 resource "aws_db_parameter_group" "dbparameters" {
   name   = "example-db-cluster-parameter-group"
   family = "aurora5.6"
 
   parameter {
-    name  = "autocommit"
-    value = "0"
+    name         = "autocommit"
+    value        = "0"
     apply_method = "pending-reboot"
   }
 }

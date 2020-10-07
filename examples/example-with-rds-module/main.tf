@@ -13,11 +13,11 @@ provider "aws" {
 # terraform-aws-rds-finalsnapshot Module
 ##############################################################
 module "snapshot_maintenance" {
-  source="../../modules/rds_snapshot_maintenance"
+  source = "../../modules/rds_snapshot_maintenance"
 
-  is_cluster=false
-  identifier="demodb"
-  database_endpoint="${module.db.this_db_instance_endpoint}"
+  is_cluster                    = false
+  identifier                    = "demodb"
+  database_endpoint             = "${module.db.this_db_instance_endpoint}"
   number_of_snapshots_to_retain = 0
 }
 
@@ -41,7 +41,7 @@ data "aws_security_group" "default" {
 # DB Example originally from https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/complete-mysql
 ##############################################################
 module "db" {
-  source = "terraform-aws-modules/rds/aws"
+  source  = "terraform-aws-modules/rds/aws"
   version = "1.15.0"
 
   identifier = "${module.snapshot_maintenance.identifier}"

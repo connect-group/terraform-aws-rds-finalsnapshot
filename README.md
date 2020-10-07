@@ -231,8 +231,10 @@ Examples
 
 Terraform Version
 -----------------
-This module requires >=0.10.4 because it uses 'Local Values' bug fixed in 0.10.4 and the `timeadd` function from 
+Version 1.0.10 of this module requires >=0.10.4 because it uses 'Local Values' bug fixed in 0.10.4 and the `timeadd` function from 
 version 0.11.2.
+
+Version 2.0.0 of this module requires >=0.12.20 and is compatible with 0.13.x
 
 How does it work? (Under the hood)
 ----------------------------------

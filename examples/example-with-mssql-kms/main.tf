@@ -8,9 +8,6 @@
 # such as `terraform-aws-modules/rds/aws` or `claranet/aurora/aws` (for example) giving the user complete flexibility 
 # over the database or cluster they wish to create.
 # ---------------------------------------------------------------------------------------------------------------------
-terraform {
-  required_version = ">=0.11.2"
-}
 
 provider "aws" {
   region = "eu-west-1"
@@ -23,8 +20,7 @@ module "snapshot_maintenance" {
   # Or the public registry,
   #   source = "connect-group/rds-finalsnapshot/aws//modules/rds_snapshot_maintenance"
   #   version="1.0.0"
-  source = "../../modules/rds_snapshot_maintenance"
-
+  source                               = "../../modules/rds_snapshot_maintenance"
   identifier                           = "demomssqlinstance"
   is_cluster                           = false
   database_endpoint                    = aws_db_instance.database.endpoint

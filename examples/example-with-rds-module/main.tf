@@ -1,9 +1,6 @@
 ##############################################################
 # Based on the terraform-aws-modules MySQL Example.
 ##############################################################
-terraform {
-  required_version = ">=0.11.2"
-}
 
 provider "aws" {
   region = "eu-west-1"
@@ -42,7 +39,7 @@ data "aws_security_group" "default" {
 ##############################################################
 module "db" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "1.15.0"
+  version = "2.18.0"
 
   identifier = module.snapshot_maintenance.identifier
 

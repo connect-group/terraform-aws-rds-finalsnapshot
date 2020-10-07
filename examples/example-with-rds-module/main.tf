@@ -61,6 +61,8 @@ module "db" {
   maintenance_window = "Mon:00:00-Mon:03:00"
   backup_window      = "03:00-06:00"
 
+  multi_az = false
+
   # disable backups to create DB faster
   backup_retention_period = 0
 
@@ -69,11 +71,16 @@ module "db" {
     Environment = "dev"
   }
 
+  enabled_cloudwatch_logs_exports = ["audit", "general"]
+
   # DB subnet group
-  subnet_ids = [data.aws_subnet_ids.all.ids]
+  subnet_ids = data.aws_subnet_ids.all.ids
 
   # DB parameter group
   family = "mysql5.7"
+
+  # DB option group
+  major_engine_version = "5.7"
 
   # Snapshot name to restore upon DB creation
   snapshot_identifier = module.snapshot_maintenance.snapshot_to_restore
@@ -82,5 +89,33 @@ module "db" {
   final_snapshot_identifier = module.snapshot_maintenance.final_snapshot_identifier
 
   skip_final_snapshot = "false"
+
+  parameters = [
+    {
+      name  = "character_set_client"
+      value = "utf8"
+    },
+    {
+      name  = "character_set_server"
+      value = "utf8"
+    }
+  ]
+
+  options = [
+    {
+      option_name = "MARIADB_AUDIT_PLUGIN"
+
+      option_settings = [
+        {
+          name  = "SERVER_AUDIT_EVENTS"
+          value = "CONNECT"
+        },
+        {
+          name  = "SERVER_AUDIT_FILE_ROTATIONS"
+          value = "37"
+        },
+      ]
+    },
+  ]
 }
 

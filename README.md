@@ -1,6 +1,14 @@
 AWS RDS Final Snapshot Management Module
 ========================================
 
+---
+
+> ** IMPORTANT **
+> Please upgrade to module version 1.0.11 if you are using Terraform 0.10.x or 0.11.x or a version below 0.12.20.
+> Please use module version 2.0.1 if you are using Terraform 0.12.20+ or 0.13.x
+
+---
+
 > UPDATED to reboot database instance(s) following a snapshot restore if a parameter group requires a pending-reboot.
 
 This module, or specifically the submodule `rds_snapshot_maintenance` will manage 
@@ -234,7 +242,7 @@ Terraform Version
 Version 1.0.10 of this module requires >=0.10.4 because it uses 'Local Values' bug fixed in 0.10.4 and the `timeadd` function from 
 version 0.11.2.
 
-Version 2.0.0 of this module requires >=0.12.20 and is compatible with 0.13.x
+Version 2.0.1 of this module requires >=0.12.20 and is compatible with 0.13.x
 
 How does it work? (Under the hood)
 ----------------------------------

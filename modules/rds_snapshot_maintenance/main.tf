@@ -137,6 +137,8 @@ resource "aws_iam_role_policy_attachment" "attach-reboot-policy" {
 # ---------------------------------------------------------------------------------------------------------------------
 module "exec-maintenance-lambda-delete-old-snapshots" {
   source              = "connect-group/lambda-exec/aws"
+  version             = "1.0.2"
+
   name                = "manage-finalsnapshot-for-${var.identifier}"
   lambda_function_arn = "${local.function_arn}"
 

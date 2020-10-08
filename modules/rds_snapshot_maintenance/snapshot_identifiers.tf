@@ -62,6 +62,8 @@ resource "aws_iam_role_policy_attachment" "attach-policy-to-find-final-snapshot-
 # ---------------------------------------------------------------------------------------------------------------------
 module "find_final_snapshot" {
   source="connect-group/lambda-exec/aws"
+  version="1.0.2"
+
   name                = "find-snapshot-for-${var.identifier}"
   lambda_function_arn = "${local.query_function_arn}"
 

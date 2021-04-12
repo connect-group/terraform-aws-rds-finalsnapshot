@@ -1,7 +1,7 @@
 import boto3
 import json
-import httplib
-from urllib2 import build_opener, HTTPHandler, Request
+import http.client
+from urllib.request import build_opener, HTTPHandler, Request
 from botocore.exceptions import ClientError
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -83,8 +83,8 @@ def handler(event,context):
       responseData["SnapshotIdentifier"] = snapshots[0]['DBSnapshotIdentifier']
 
   # print some thing if it helps with logging
-  print "result="+responseData["SnapshotIdentifier"]
-  print "Error="+responseData['Error']
+  print("result="+responseData["SnapshotIdentifier"])
+  print("Error="+responseData['Error'])
 
   sendResponse(event, context, responseStatus, responseData)
 
@@ -147,15 +147,17 @@ def sendResponse(event, context, responseStatus, responseData):
     "Data": responseData
   })
 
-  print('ResponseURL: {}'.format(event['ResponseURL']))
-  print('ResponseBody: {}'.format(responseBody))
+  encodedResponseBody = responseBody.encode('utf-8')
+
+  print(('ResponseURL: {}'.format(event['ResponseURL'])))
+  print(('ResponseBody: {}'.format(responseBody)))
 
   opener = build_opener(HTTPHandler)
-  request = Request(event['ResponseURL'], data=responseBody)
+  request = Request(event['ResponseURL'], data=encodedResponseBody)
   request.add_header('Content-Type', '')
-  request.add_header('Content-Length', len(responseBody))
+  request.add_header('Content-Length', len(encodedResponseBody))
   request.get_method = lambda: 'PUT'
   response = opener.open(request)
-  print("Status code: {}".format(response.getcode()))
-  print("Status message: {}".format(response.msg))
+  print(("Status code: {}".format(response.getcode())))
+  print(("Status message: {}".format(response.msg)))
 

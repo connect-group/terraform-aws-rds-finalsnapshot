@@ -1,7 +1,7 @@
 import boto3
 import json
-import httplib
-from urllib2 import build_opener, HTTPHandler, Request
+import http.client
+from urllib.request import build_opener, HTTPHandler, Request
 from botocore.exceptions import ClientError
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -95,11 +95,11 @@ def handler(event,context):
         if is_cluster:
           snapshot_identifier=snapshot['DBClusterSnapshotIdentifier']
           rds.delete_db_cluster_snapshot(DBClusterSnapshotIdentifier=snapshot_identifier)
-          print "Deleted DB Cluster Snapshot " + snapshot_identifier
+          print("Deleted DB Cluster Snapshot " + snapshot_identifier)
         else:
           snapshot_identifier=snapshot['DBSnapshotIdentifier']
           rds.delete_db_snapshot(DBSnapshotIdentifier=snapshot_identifier)
-          print "Deleted DB Snapshot " + snapshot_identifier
+          print("Deleted DB Snapshot " + snapshot_identifier)
 
 
   sendResponse(event, context, responseStatus, responseData)
@@ -162,17 +162,19 @@ def sendResponse(event, context, responseStatus, responseData):
     "Data": responseData
   })
 
-  print('ResponseURL: {}'.format(event['ResponseURL']))
-  print('ResponseBody: {}'.format(responseBody))
+  encodedResponseBody = responseBody.encode('utf-8')
+
+  print(('ResponseURL: {}'.format(event['ResponseURL'])))
+  print(('ResponseBody: {}'.format(responseBody)))
 
   opener = build_opener(HTTPHandler)
-  request = Request(event['ResponseURL'], data=responseBody)
+  request = Request(event['ResponseURL'], data=encodedResponseBody)
   request.add_header('Content-Type', '')
-  request.add_header('Content-Length', len(responseBody))
+  request.add_header('Content-Length', len(encodedResponseBody))
   request.get_method = lambda: 'PUT'
   response = opener.open(request)
-  print("Status code: {}".format(response.getcode()))
-  print("Status message: {}".format(response.msg))
+  print(("Status code: {}".format(response.getcode())))
+  print(("Status message: {}".format(response.msg)))
 
 def reboot_instance_if_required(identifier):
   reboot_required = False
@@ -183,7 +185,7 @@ def reboot_instance_if_required(identifier):
       reboot_required = True
 
   if reboot_required:
-    print "Rebooting Instance " + identifier
+    print("Rebooting Instance " + identifier)
     rds.reboot_db_instance(DBInstanceIdentifier=identifier, ForceFailover=False)
 
 def reboot_cluster_if_required(identifier):

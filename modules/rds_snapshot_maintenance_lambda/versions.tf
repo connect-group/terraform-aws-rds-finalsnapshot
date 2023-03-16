@@ -8,8 +8,5 @@ terraform {
     aws = {
       source = "hashicorp/aws"
     }
-    template = {
-      source = "hashicorp/template"
-    }
   }
 }

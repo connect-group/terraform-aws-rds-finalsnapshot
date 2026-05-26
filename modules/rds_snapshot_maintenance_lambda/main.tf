@@ -1,21 +1,15 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Create the maintenance Lambda.
 # ---------------------------------------------------------------------------------------------------------------------
-data "template_file" "maintain-rds-final-snapshots" {
-  count    = var.include_this_module ? 1 : 0
-  template = file("${path.module}/lambda/maintain-rds-final-snapshots.py")
-  vars = {
-    function_name = var.function_name
-  }
-}
-
 data "archive_file" "maintain-rds-final-snapshots-zip" {
   count       = var.include_this_module ? 1 : 0
   type        = "zip"
   output_path = "${path.module}/lambda/maintain-rds-final-snapshots.py.zip"
 
   source {
-    content  = data.template_file.maintain-rds-final-snapshots[0].rendered
+    content = templatefile("${path.module}/lambda/maintain-rds-final-snapshots.py", {
+      function_name = var.function_name
+    })
     filename = "maintain_rds_final_snapshots.py"
   }
 }
@@ -55,21 +49,15 @@ EOF
 # ---------------------------------------------------------------------------------------------------------------------
 # Create the query Lambda.
 # ---------------------------------------------------------------------------------------------------------------------
-data "template_file" "find-final-snapshot" {
-  count    = var.include_this_module ? 1 : 0
-  template = file("${path.module}/lambda/find-final-snapshot.py")
-  vars = {
-    function_name = "${var.function_name}Q"
-  }
-}
-
 data "archive_file" "find-final-snapshot-zip" {
   count       = var.include_this_module ? 1 : 0
   type        = "zip"
   output_path = "${path.module}/lambda/find-final-snapshot.py.zip"
 
   source {
-    content  = data.template_file.find-final-snapshot[0].rendered
+    content = templatefile("${path.module}/lambda/find-final-snapshot.py", {
+      function_name = "${var.function_name}Q"
+    })
     filename = "find_final_snapshot.py"
   }
 }
